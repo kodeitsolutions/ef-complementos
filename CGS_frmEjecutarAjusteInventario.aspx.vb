@@ -81,6 +81,10 @@ Partial Class CGS_frmEjecutarAjusteInventario
                 Me.pcOrigenDocumento = CStr(laIndices("Documento")).Trim()
                 'Me.pcOrigenRenglon = CStr(laIndices("Renglon")).Trim()
 
+                Me.pcTablaDocumento = CStr(laParametros("lcTabla")).Trim()
+
+                Me.txtComentario.Text = Me.pcTablaDocumento
+
                 Dim lcRenglonOrigen As Integer = 1 'laIndices("Renglon")
                 Me.pcOrigenRenglon = "1"
 
@@ -106,6 +110,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
         'loConsulta.AppendLine("BEGIN")
         'loConsulta.AppendLine("    THROW 50000, 'Error!!', 0")
         'loConsulta.AppendLine("END")
+
 
         loConsulta.AppendLine("DECLARE @lcDocumento VARCHAR(10) = " & lcDocumentoSQL)
         loConsulta.AppendLine("DECLARE @RC int")
@@ -200,7 +205,9 @@ Partial Class CGS_frmEjecutarAjusteInventario
         loConsulta.AppendLine("IF @lcLote <> ''")
         loConsulta.AppendLine("BEGIN")
         loConsulta.AppendLine("	UPDATE Renglones_Lotes SET Exi_Act1 = Exi_Act1 + @lnCantidad ")
-        loConsulta.AppendLine("	WHERE Cod_Lot = @lcLote AND Cod_ALm = @lcAlmacen AND Cod_Art = @lcArticulo")
+        loConsulta.AppendLine("	WHERE Cod_Lot = @lcLote AND Cod_Alm = @lcAlmacen AND Cod_Art = @lcArticulo")
+        loConsulta.AppendLine("")
+        loConsulta.AppendLine(" UPDATE Lotes SET Exi_Act1 = Exi_Act1 + @lnCantidad WHERE Cod_Lot = @lcLote AND Cod_Art = @lcArticulo")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	INSERT INTO Operaciones_Lotes (Cod_Alm, Cod_Art, Cod_Lot, Cantidad, Num_Doc, Renglon, Tip_Doc, Tip_Ope, Ren_Ori)")
         loConsulta.AppendLine("	SELECT	 Almacen, Articulo, Lote, ABS(@lnCantidad), @lcProximoContador, 1, 'Ajustes_Inventarios',")
@@ -334,7 +341,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
             Return
         End If
 
-        Me.txtComentario.Text = CStr(loFilaQuery("Comentario")).Trim()
+        'Me.txtComentario.Text = CStr(loFilaQuery("Comentario")).Trim()
 
         Dim loConsulta As New StringBuilder()
 
