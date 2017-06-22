@@ -218,6 +218,8 @@ Partial Class CGS_frmEjecutarAjusteInventario
         loConsulta.AppendLine("UPDATE Ajustes SET Mon_Net = (SELECT SUM(Mon_Net) FROM Renglones_Ajustes WHERE Documento = @lcProximoContador) WHERE Documento = @lcProximoContador")
         loConsulta.AppendLine("UPDATE Ajustes SET Can_Art1 = (SELECT SUM(Can_Art1) FROM Renglones_Ajustes WHERE Documento = @lcProximoContador) WHERE Documento = @lcProximoContador")
         loConsulta.AppendLine("")
+        loConsulta.AppendLine("UPDATE Renglones_Recepciones SET Caracter2 = 'AJUSTADO' WHERE Documento = @lcDocumento AND Cod_Art = @lcArticulo")
+        loConsulta.AppendLine("")
         loConsulta.AppendLine("DROP TABLE #tmpTemporal")
         loConsulta.AppendLine("")
 

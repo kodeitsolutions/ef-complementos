@@ -115,6 +115,8 @@ Partial Class CGS_frmEliminarAjusteInventario
         loConsulta.AppendLine("		UPDATE Lotes SET Exi_Act1 = Exi_Act1 + @lnCantidad")
         loConsulta.AppendLine("		WHERE Cod_Art = @lcArticulo AND Cod_Lot = @lcLote")
         loConsulta.AppendLine("")
+        loConsulta.AppendLine("     UPDATE Renglones_Recepciones SET Caracter2 = '' WHERE Documento = @lcOrigen AND Cod_Art = @lcArticulo")
+        loConsulta.AppendLine("")
         loConsulta.AppendLine("		DELETE FROM Operaciones_Lotes WHERE Num_Doc = @lcDocumento AND Cod_Art = @lcArticulo")
         loConsulta.AppendLine("									  AND Tip_Doc = 'Ajustes_Inventarios' AND Tip_Ope = @lcTipo AND Cod_Alm = @lcAlmacen")
         loConsulta.AppendLine("	END")
@@ -150,6 +152,8 @@ Partial Class CGS_frmEliminarAjusteInventario
         loConsulta.AppendLine("	    DECLARE @lnCostoPro2 DECIMAL(28,10) = ((@lnCantidadFac * @lnPrecio2)  + (@lnExi_Art * @lnCosPro2_Art)) / (@lnCantidadFac + @lnExi_Art)")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	    UPDATE Articulos SET Cos_Pro1 = @lnCostoPro1, Cos_Pro2 = @lnCostoPro2 WHERE Cod_Art = @lcArticulo")
+        loConsulta.AppendLine("")
+        loConsulta.AppendLine("     UPDATE Renglones_Compras SET Caracter2 = '' WHERE Documento = @lcOrigen AND Cod_Art = @lcArticulo")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	    IF @ldFec_Ult <= @ldFecha")
         loConsulta.AppendLine("	    BEGIN ")
@@ -256,7 +260,7 @@ Partial Class CGS_frmEliminarAjusteInventario
         Dim loDatosBusqueda As New goDatos()
         Dim loQuery As New StringBuilder()
 
-        loQuery.AppendLine("SELECT Documento, Comentario, Status")
+        loQuery.AppendLine("SELECT Documento, Comentario, Status, Tip_Ori")
         loQuery.AppendLine("FROM Ajustes")
         loQuery.AppendLine("WHERE Documento = " & lcDocumentoSQL)
         loQuery.AppendLine("")
@@ -278,6 +282,13 @@ Partial Class CGS_frmEliminarAjusteInventario
 
         If CStr(loFilaQuery("Status")).Trim() = "Pendiente" Then
             Me.mMostrarMensajeModal("Documento Bloqueado", "Documento en estatus 'Pendiente'. Elimine este ajuste usando el botón eliminar en la ficha General.", "a")
+
+            Me.mDeshabilitarTodo()
+            Return
+        End If
+
+        If CStr(loFilaQuery("Tip_Ori")).Trim() <> "Recepciones" Or CStr(loFilaQuery("Tip_Ori")).Trim() <> "Compras" Or CStr(loFilaQuery("Tip_Ori")).Trim() = "" Then
+            Me.mMostrarMensajeModal("Documento Bloqueado", "Solo se pueden eliminar documentos cuyo origen sea Notas de Recepción o Facturas de Compras.", "a")
 
             Me.mDeshabilitarTodo()
             Return
