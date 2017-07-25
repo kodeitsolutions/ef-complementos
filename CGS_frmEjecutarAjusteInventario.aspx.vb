@@ -83,7 +83,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
 
                 Me.pcTablaDocumento = CStr(laParametros("lcTabla")).Trim()
 
-                Me.txtComentario.Text = Me.pcTablaDocumento
+                'Me.txtComentario.Text = Me.pcTablaDocumento
 
                 Dim lcRenglonOrigen As Integer = 1 'laIndices("Renglon")
                 Me.pcOrigenRenglon = "1"
@@ -181,7 +181,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
         loConsulta.AppendLine("")
         loConsulta.AppendLine("INSERT INTO Ajustes (Documento,status,automatico,cod_mon,tasa,tipo,tip_ori,doc_ori,comentario,cod_suc,fec_ini,fec_fin)")
         loConsulta.AppendLine("VALUES(@lcProximoContador,'Confirmado',1,'VEB',1.00,'Existencia','Recepciones',@lcDocumento,")
-        loConsulta.AppendLine("	'Ajuste de Inventario generado automáticamente desde complemento ''Ajuste de inventario por cantidad revisada'' ',@lcCodigoSucursal,@ldFecha,@ldFecha)")
+        loConsulta.AppendLine("	'Ajuste de Inventario generado automáticamente desde complemento ''Ajuste de existencia por cantidad revisada'' ',@lcCodigoSucursal,@ldFecha,@ldFecha)")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("INSERT INTO renglones_ajustes (Documento,cod_art,renglon,cod_tip,tipo,cod_alm,can_art1,cos_ult1,")
         loConsulta.AppendLine("								mon_net,tip_ori,doc_ori,notas,can_uni,cod_uni,can_uni2,cod_uni2,can_art2,")
@@ -189,7 +189,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
         loConsulta.AppendLine("SELECT @lcProximoContador,Articulo,1,")
         loConsulta.AppendLine("		CASE WHEN @lnCantidad > 0 THEN 'E01' ELSE 'S01' END,")
         loConsulta.AppendLine("		CASE WHEN @lnCantidad > 0 THEN 'Entrada' ELSE 'Salida' END,")
-        loConsulta.AppendLine("		almacen,ABS(@lnCantidad),precio1,ABS(@lnCantidad)*precio1,'Recepciones',@lcDocumento,")
+        loConsulta.AppendLine("		almacen,ABS(@lnCantidad),0,ABS(@lnCantidad)*0,'Recepciones',@lcDocumento,")
         loConsulta.AppendLine("		nom_art,can_uni1,unidad1,can_uni2,unidad2,ABS(@lnCantidad),precio2,precio1,")
         loConsulta.AppendLine("		precio2,precio1,precio2,precio1,precio2")
         loConsulta.AppendLine("FROM #tmpTemporal")
@@ -215,7 +215,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
         loConsulta.AppendLine("	FROM #tmpTemporal")
         loConsulta.AppendLine("END")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("UPDATE Ajustes SET Mon_Net = (SELECT SUM(Mon_Net) FROM Renglones_Ajustes WHERE Documento = @lcProximoContador) WHERE Documento = @lcProximoContador")
+        'loConsulta.AppendLine("UPDATE Ajustes SET Mon_Net = (SELECT SUM(Mon_Net) FROM Renglones_Ajustes WHERE Documento = @lcProximoContador) WHERE Documento = @lcProximoContador")
         loConsulta.AppendLine("UPDATE Ajustes SET Can_Art1 = (SELECT SUM(Can_Art1) FROM Renglones_Ajustes WHERE Documento = @lcProximoContador) WHERE Documento = @lcProximoContador")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("UPDATE Renglones_Recepciones SET Caracter2 = 'AJUSTADO' WHERE Documento = @lcDocumento AND Cod_Art = @lcArticulo")
@@ -343,7 +343,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
             Return
         End If
 
-        'Me.txtComentario.Text = CStr(loFilaQuery("Comentario")).Trim()
+        Me.txtComentario.Text = CStr(loFilaQuery("Comentario")).Trim()
 
         Dim loConsulta As New StringBuilder()
 
@@ -450,5 +450,5 @@ End Class
 ''-------------------------------------------------------------------------------------------'
 '' Fin del codigo																			'
 ''-------------------------------------------------------------------------------------------'
-'' RJG: 15/12/15: Codigo Inicial.								                            '
+'' kode it: 06/06/17: Codigo Inicial.								                            '
 ''-------------------------------------------------------------------------------------------'

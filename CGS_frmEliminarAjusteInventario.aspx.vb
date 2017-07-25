@@ -204,6 +204,9 @@ Partial Class CGS_frmEliminarAjusteInventario
             Me.mMostrarMensajeModal("Operación Completada", _
                 "El Documento  '" & Me.pcOrigenDocumento & " fue eliminado satisfactoriamente. ", "i")
 
+            Me.txtDocumento.Text = ""
+            Me.txtComentario.Text = ""
+
         Catch loExcepcion As Exception
 
             'Un error al ejecutar la transaccion principal lo mostramos como mensaje tipo "Error"
@@ -265,7 +268,7 @@ Partial Class CGS_frmEliminarAjusteInventario
         loQuery.AppendLine("WHERE Documento = " & lcDocumentoSQL)
         loQuery.AppendLine("")
 
-        Dim loTabla As DataTable = loDatosBusqueda.mObtenerTodosSinEsquema(loQuery.ToString(), "Recepciones").Tables(0)
+        Dim loTabla As DataTable = loDatosBusqueda.mObtenerTodosSinEsquema(loQuery.ToString(), "Ajustes").Tables(0)
 
         Dim loFilaQuery As DataRow
         loFilaQuery = loTabla.Rows(0)
@@ -287,7 +290,7 @@ Partial Class CGS_frmEliminarAjusteInventario
             Return
         End If
 
-        If CStr(loFilaQuery("Tip_Ori")).Trim() <> "Recepciones" Or CStr(loFilaQuery("Tip_Ori")).Trim() <> "Compras" Or CStr(loFilaQuery("Tip_Ori")).Trim() = "" Then
+        If CStr(loFilaQuery("Tip_Ori")).Trim() <> "Recepciones" And CStr(loFilaQuery("Tip_Ori")).Trim() <> "Compras" And CStr(loFilaQuery("Tip_Ori")).Trim() = "" Then
             Me.mMostrarMensajeModal("Documento Bloqueado", "Solo se pueden eliminar documentos cuyo origen sea Notas de Recepción o Facturas de Compras.", "a")
 
             Me.mDeshabilitarTodo()
@@ -353,5 +356,5 @@ End Class
 '''-------------------------------------------------------------------------------------------'
 ''' Fin del codigo																			'
 '''-------------------------------------------------------------------------------------------'
-''' RJG: 15/12/15: Codigo Inicial.								                            '
+''' kode it solutions: 13/06/17: Codigo Inicial.								                            '
 '''-------------------------------------------------------------------------------------------'

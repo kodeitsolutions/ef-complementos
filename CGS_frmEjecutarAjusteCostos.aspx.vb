@@ -167,7 +167,7 @@ Partial Class CGS_frmEjecutarAjusteCostos
         loConsulta.AppendLine("		Renglones_Compras.cod_uni,Renglones_Compras.can_uni,Renglones_Compras.cod_uni2,Renglones_Compras.can_uni2,")
         loConsulta.AppendLine("		Renglones_Compras.precio1,Renglones_Compras.precio2,Compras.cod_suc, Articulos.Cod_Art")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("SELECT Exi_Act1,Cos_Ult1, Cos_Ult2, Fec_Ult, Cos_Ant1, Cos_Ant2, Cos_")
+        loConsulta.AppendLine("SELECT Exi_Act1,Cos_Ult1, Cos_Ult2, Fec_Ult, Cos_Ant1, Cos_Ant2, Cos_Pro1, Cos_Pro2")
         loConsulta.AppendLine("INTO #tmpArticulo")
         loConsulta.AppendLine("FROM Articulos")
         loConsulta.AppendLine("WHERE Cod_Art = @lcArticulo")
@@ -177,8 +177,8 @@ Partial Class CGS_frmEjecutarAjusteCostos
         loConsulta.AppendLine("DECLARE @lnCostoUlt2 DECIMAL(28,10) ")
         loConsulta.AppendLine("DECLARE @lnCostoPro2 DECIMAL(28,10)")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("DECLARE @lnPrecio1 DECIMAL(28,10) = (SELECT Precio1 FROM #tmpTemporal")
-        loConsulta.AppendLine("DECLARE @lnPrecio2 DECIMAL(28,10) = (SELECT Precio2 FROM #tmpTemporal")
+        loConsulta.AppendLine("DECLARE @lnPrecio1 DECIMAL(28,10) = (SELECT Precio1 FROM #tmpTemporal)")
+        loConsulta.AppendLine("DECLARE @lnPrecio2 DECIMAL(28,10) = (SELECT Precio2 FROM #tmpTemporal)")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("SET @lcSucursal = (SELECT TOP 1 Sucursal FROM #tmpTemporal)	")
         loConsulta.AppendLine("SET @ldFecha = (SELECT TOP 1 Fecha FROM #tmpTemporal)	")
@@ -215,7 +215,7 @@ Partial Class CGS_frmEjecutarAjusteCostos
         loConsulta.AppendLine("")
         loConsulta.AppendLine("INSERT INTO Ajustes (Documento,Status,Cod_Mon,Tasa,Tipo,Tip_Ori,Doc_Ori,Comentario,Cod_Suc,Fec_Ini,Fec_Fin)")
         loConsulta.AppendLine("VALUES(@lcProximoContador,'Confirmado','VEB',1.00,'Costo','Compras',@lcDocumento,")
-        loConsulta.AppendLine("			'Ajuste de Inventario generado desde el complemento ''Ajuste de Inventario por cantidad revisada'' ',@lcSucursal,@ldFecha,@ldFecha)")
+        loConsulta.AppendLine("			'Ajuste de Inventario generado desde el complemento ''Ajuste de Costos por cantidad revisada'' ',@lcSucursal,@ldFecha,@ldFecha)")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("INSERT INTO Renglones_Ajustes (Documento,Cod_Art,Renglon,Cod_Tip,Cod_Alm,Can_Art1,Cos_Ult1,Cos_Ult2,")
         loConsulta.AppendLine("								Mon_Net,Notas,Can_Uni,Cod_Uni,Can_Uni2,Cod_Uni2,Can_Art2,")
@@ -458,7 +458,9 @@ Partial Class CGS_frmEjecutarAjusteCostos
         loConsulta.AppendLine("FROM Renglones_Compras")
         loConsulta.AppendLine("WHERE Documento = " & lcDocumentoSQL)
         loConsulta.AppendLine(" AND Cod_Art = " & lcCod_Art)
-        loConsulta.AppendLine("GROUP BY Cod_Art ")
+        loConsulta.AppendLine("GROUP BY Cod_Art,Caracter2 ")
+
+        'Me.txtComentario.Text = "ENTRE"
 
         loTabla = loDatos.mObtenerTodosSinEsquema(loConsulta.ToString(), "Renglones_Compras").Tables(0)
 
@@ -497,5 +499,5 @@ End Class
 ''-------------------------------------------------------------------------------------------'
 '' Fin del codigo																			'
 ''-------------------------------------------------------------------------------------------'
-'' RJG: 15/12/15: Codigo Inicial.								                            '
+'' kode it: 14/06/17: Codigo Inicial.								                            '
 ''-------------------------------------------------------------------------------------------'
