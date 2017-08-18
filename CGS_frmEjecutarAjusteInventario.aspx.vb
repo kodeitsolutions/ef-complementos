@@ -80,15 +80,14 @@ Partial Class CGS_frmEjecutarAjusteInventario
                 'NOTA: Deben ser nombres de campos índice válidos: dependen del formulairo de origen
                 Me.pcOrigenDocumento = CStr(laIndices("Documento")).Trim()
                 'Me.pcOrigenRenglon = CStr(laIndices("Renglon")).Trim()
-
                 Me.pcTablaDocumento = CStr(laParametros("lcTabla")).Trim()
 
                 'Me.txtComentario.Text = Me.pcTablaDocumento
 
-                Dim lcRenglonOrigen As Integer = 1 'laIndices("Renglon")
-                Me.pcOrigenRenglon = "1"
+                'Dim lcRenglonOrigen As Integer = 1 'laIndices("Renglon")
+                'Me.pcOrigenRenglon = "1"
 
-                Me.mCargarDocumento(Me.pcOrigenDocumento, Me.pcOrigenRenglon)
+                Me.mCargarDocumento(Me.pcOrigenDocumento) ', Me.pcOrigenRenglon)
 
             End If
 
@@ -315,10 +314,10 @@ Partial Class CGS_frmEjecutarAjusteInventario
     '    ''' <param name="lcDocumento"></param>
     '    ''' <param name="lcTabla"></param>
     '    ''' <remarks></remarks>
-    Private Sub mCargarDocumento(ByVal lcDocumento As String, ByVal lcRenglon As Integer)
+    Private Sub mCargarDocumento(ByVal lcDocumento As String) ', ByVal lcRenglon As Integer)
 
         Dim lcDocumentoSQL As String = goServicios.mObtenerCampoFormatoSQL(lcDocumento)
-        Dim lcRenglonSQL As String = goServicios.mObtenerCampoFormatoSQL(lcRenglon)
+        'Dim lcRenglonSQL As String = goServicios.mObtenerCampoFormatoSQL(lcRenglon)
 
         Me.txtDocumento.Text = lcDocumento
 
@@ -350,15 +349,16 @@ Partial Class CGS_frmEjecutarAjusteInventario
         loConsulta.AppendLine("SELECT Renglones_Recepciones.Cod_Art         AS Cod_Art, ")
         loConsulta.AppendLine("     SUM(Renglones_Recepciones.Can_Art1)     AS Cantidad,")
         loConsulta.AppendLine("     COALESCE(Operaciones_Lotes.Cod_Lot,'')  AS Lote,")
-        loConsulta.AppendLine("     Renglones_Recepciones.Caracter2         AS Estatus")
+        loConsulta.AppendLine("     Renglones_Recepciones.Caracter2         AS Estatus,")
+        loConsulta.AppendLine("     Renglones_Recepciones.Cod_Alm           AS Cod_Alm")
         loConsulta.AppendLine("FROM Renglones_Recepciones")
         loConsulta.AppendLine(" LEFT JOIN Operaciones_Lotes ON Operaciones_Lotes.Num_Doc = Renglones_Recepciones.Documento")
         loConsulta.AppendLine("     AND Renglones_Recepciones.Cod_Art = Operaciones_Lotes.Cod_Art")
         loConsulta.AppendLine("     AND Operaciones_Lotes.Ren_Ori = Renglones_Recepciones.Renglon")
         loConsulta.AppendLine("     AND Operaciones_Lotes.Tip_Doc = 'Recepciones' AND Operaciones_Lotes.Tip_Ope = 'Entrada'")
         loConsulta.AppendLine("WHERE Renglones_Recepciones.Documento = " & lcDocumentoSQL)
-        loConsulta.AppendLine("     AND Renglones_Recepciones.Renglon = " & lcRenglonSQL)
-        loConsulta.AppendLine("GROUP BY Renglones_Recepciones.Cod_Art, Operaciones_Lotes.Cod_Lot, Renglones_Recepciones.Caracter2")
+        'loConsulta.AppendLine("     AND Renglones_Recepciones.Renglon = " & lcRenglonSQL)
+        loConsulta.AppendLine("GROUP BY Renglones_Recepciones.Cod_Art, Operaciones_Lotes.Cod_Lot, Renglones_Recepciones.Caracter2, Renglones_Recepciones.Cod_Alm")
         loConsulta.AppendLine("")
 
         Dim loDatosConsulta As New goDatos()
@@ -372,6 +372,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
             Me.txtAjs_Dif.pbValor = 0
         End If
 
+        'Me.txtComentario.Text = CBool(loFilaConsulta("Usa_Lot"))
         'Validaciones:
         If (CStr(loFilaConsulta("Estatus")).Trim() = "AJUSTADO") Then
             Me.mMostrarMensajeModal("Documento Bloqueado", "Este renglón ya tiene un Ajuste de Inventario asociado.", "a")
@@ -380,16 +381,36 @@ Partial Class CGS_frmEjecutarAjusteInventario
             Return
         End If
         'VALIDACION DE TIPO DE SERVICIO ¡¡¡QUITAR COMENTARIO!!!
-        'Dim lcConsulta As String = "SELECT Tipo, Nom_Art FROM Articulos WHERE Cod_Art = " & goServicios.mObtenerCampoFormatoSQL(CStr(loFilaConsulta("Cod_Art")).Trim())
-        'Dim loDConsulta As New goDatos()
-        'Dim loTConsulta As DataTable = loDConsulta.mObtenerTodosSinEsquema(lcConsulta, "Articulos").Tables(0)
+        Dim lcConsulta As String = "SELECT Tipo, Nom_Art, Usa_Lot FROM Articulos WHERE Cod_Art = " & goServicios.mObtenerCampoFormatoSQL(CStr(loFilaConsulta("Cod_Art")).Trim())
+        Dim loDConsulta As New goDatos()
+        Dim loTConsulta As DataTable = loDConsulta.mObtenerTodosSinEsquema(lcConsulta, "Articulos").Tables(0)
 
-        'If (CStr(loTConsulta.Rows(0).Item("Tipo")).Trim() = "Servicio") Then
-        '    Me.mMostrarMensajeModal("Documento bloqueado", "El artículo " & CStr(loFilaConsulta("Cod_Art")).Trim() & " - " & CStr(loTConsulta.Rows(0).Item("Nom_Art")).Trim() & " es de tipo 'Servicio' y no permite Ajustes de Inventario.", "e")
+        If (CStr(loTConsulta.Rows(0).Item("Tipo")).Trim() = "Servicio") Then
+            Me.mMostrarMensajeModal("Documento bloqueado", "El artículo " & CStr(loFilaConsulta("Cod_Art")).Trim() & " - " & CStr(loTConsulta.Rows(0).Item("Nom_Art")).Trim() & " es de tipo 'Servicio' y no permite Ajustes de Inventario.", "e")
 
-        '    Me.mDeshabilitarTodo()
-        '    Return
-        'End If
+            Me.mDeshabilitarTodo()
+            Return
+        ElseIf (CBool(loTConsulta.Rows(0).Item("Usa_Lot")) = True) Then
+            'Me.txtComentario.Text = CBool(loTConsulta.Rows(0).Item("Usa_Lot"))
+            Dim lcConsultaLotes As New StringBuilder()
+
+            lcConsultaLotes.AppendLine("SELECT COUNT(Cod_Lot) AS Total")
+            lcConsultaLotes.AppendLine("FROM Operaciones_Lotes")
+            lcConsultaLotes.AppendLine("WHERE Cod_Art = " & goServicios.mObtenerCampoFormatoSQL(CStr(loFilaConsulta("Cod_Art")).Trim()))
+            lcConsultaLotes.AppendLine("    AND Cod_Alm = " & goServicios.mObtenerCampoFormatoSQL(CStr(loFilaConsulta("Cod_Alm")).Trim()))
+            lcConsultaLotes.AppendLine("    AND Tip_Doc = 'Recepciones'")
+            lcConsultaLotes.AppendLine("    AND Num_Doc = " & lcDocumentoSQL)
+            lcConsultaLotes.AppendLine("")
+
+            Dim loTConsulta2 As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsultaLotes.ToString(), "Lotes").Tables(0)
+
+            If (CDec(loTConsulta2.Rows(0).Item("Total")) = 0D) Then
+                Me.mMostrarMensajeModal("Documento bloqueado", "Debe asignar los lotes para poder generar el ajuste de inventario.", "e")
+
+                Me.mDeshabilitarTodo()
+                Return
+            End If
+        End If
 
     End Sub
 
