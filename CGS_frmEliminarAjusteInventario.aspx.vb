@@ -80,7 +80,6 @@ Partial Class CGS_frmEliminarAjusteInventario
         Dim loDatos As New goDatos()
 
         Dim lcConsulta As String = "SELECT Can_Art1, Tipo, Cod_Art, Cod_Alm, Cos_Ult1, Cos_Ult2 FROM Renglones_Ajustes WHERE Documento = " & lcDocumentoSQL & ";"
-
         Dim loTabla As DataTable = loDatos.mObtenerTodosSinEsquema(lcConsulta, "Renglones_Ajustes").Tables(0)
 
         'Dim lcDocumentoAjuste As String = CStr(loTabla.Rows(0).Item("Documento")).Trim()
@@ -92,6 +91,7 @@ Partial Class CGS_frmEliminarAjusteInventario
         loConsulta.AppendLine("DECLARE @ldFecha AS DATETIME = (SELECT Fec_Ini FROM Ajustes WHERE Documento = @lcDocumento)")
         loConsulta.AppendLine("DECLARE @lcOrigen AS VARCHAR(10) = (SELECT Doc_Ori FROM Ajustes WHERE Documento = @lcDocumento)")
         loConsulta.AppendLine("DECLARE @lnCantidad AS DECIMAL(28,10) = CAST(" & goServicios.mObtenerCampoFormatoSQL(loTabla.Rows(0).Item("Can_Art1")) & " AS DECIMAL(28,10))")
+        loConsulta.AppendLine("DECLARE @lnCantidadAju AS DECIMAL(28,10) = (SELECT Numerico1 FROM Ajustes WHERE Documento = @lcDocumento)")
         loConsulta.AppendLine("DECLARE @lcTipo AS VARCHAR(15) = " & goServicios.mObtenerCampoFormatoSQL(loTabla.Rows(0).Item("Tipo")))
         loConsulta.AppendLine("DECLARE @lcArticulo AS VARCHAR(8) = " & goServicios.mObtenerCampoFormatoSQL(loTabla.Rows(0).Item("Cod_Art")))
         loConsulta.AppendLine("DECLARE @lcAlmacen AS VARCHAR(15) = " & goServicios.mObtenerCampoFormatoSQL(loTabla.Rows(0).Item("Cod_Alm")))
@@ -124,9 +124,10 @@ Partial Class CGS_frmEliminarAjusteInventario
         loConsulta.AppendLine("")
         loConsulta.AppendLine("IF RTRIM(@lcTipoAjuste) = 'Costo'")
         loConsulta.AppendLine("BEGIN")
+        loConsulta.AppendLine("")
         loConsulta.AppendLine("	    DECLARE @lnCantidadFac AS DECIMAL(28,10) = (SELECT SUM(Can_Art1) FROM Renglones_Compras WHERE Cod_Art = @lcArticulo AND Documento = @lcOrigen)")
-        loConsulta.AppendLine("	    DECLARE @lnPrecio1 AS DECIMAL(28,10) = CAST(" & goServicios.mObtenerCampoFormatoSQL(loTabla.Rows(0).Item("Cos_Ult1")) & " AS DECIMAL(28,10))")
-        loConsulta.AppendLine("	    DECLARE @lnPrecio2 AS DECIMAL(28,10) = CAST(" & goServicios.mObtenerCampoFormatoSQL(loTabla.Rows(0).Item("Cos_Ult2")) & " AS DECIMAL(28,10))")
+        loConsulta.AppendLine("	    DECLARE @lnPrecio1 AS DECIMAL(28,10) = (SELECT TOP 1 Precio1 FROM Renglones_Compras WHERE Documento = @lcOrigen AND Cod_Art = @lcArticulo ORDER BY Renglon ASC)")
+        loConsulta.AppendLine("	    DECLARE @lnPrecio2 AS DECIMAL(28,10) = (SELECT TOP 1 Precio2 FROM Renglones_Compras WHERE Documento = @lcOrigen AND Cod_Art = @lcArticulo ORDER BY Renglon ASC)")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	    SELECT Exi_Act1,Fec_Ult, Cos_Ant1, Cos_Ant2, Cos_Pro1, Cos_Pro2")
         loConsulta.AppendLine("	    INTO #tmpArticulo")
@@ -148,8 +149,8 @@ Partial Class CGS_frmEliminarAjusteInventario
         loConsulta.AppendLine("			    @ldFec_Ult = Fec_Ult")
         loConsulta.AppendLine("	    FROM #tmpArticulo ")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("	    DECLARE @lnCostoPro1 DECIMAL(28,10) = COALESCE((((@lnCantidadFac * @lnPrecio1)  + (@lnExi_Art * @lnCosPro1_Art)) / (@lnCantidadFac + @lnExi_Art)),0)")
-        loConsulta.AppendLine("	    DECLARE @lnCostoPro2 DECIMAL(28,10) = COALESCE((((@lnCantidadFac * @lnPrecio2)  + (@lnExi_Art * @lnCosPro2_Art)) / (@lnCantidadFac + @lnExi_Art)),0)")
+        loConsulta.AppendLine("	        DECLARE @lnCostoPro1 DECIMAL(28,2) = COALESCE(((((@lnCosPro1_Art)*(@lnCantidadFac+@lnCantidadAju+@lnExi_Art)) - (@lnCantidadFac*@lnPrecio1))/(@lnExi_Art)),0)")
+        loConsulta.AppendLine("	        DECLARE @lnCostoPro2 DECIMAL(28,2) = COALESCE(((((@lnCosPro2_Art)*(@lnCantidadFac+@lnCantidadAju+@lnExi_Art)) - (@lnCantidadFac*@lnPrecio2))/(@lnExi_Art)),0)")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	    UPDATE Articulos SET Cos_Pro1 = @lnCostoPro1, Cos_Pro2 = @lnCostoPro2 WHERE Cod_Art = @lcArticulo")
         loConsulta.AppendLine("")
