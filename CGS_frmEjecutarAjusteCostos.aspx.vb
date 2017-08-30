@@ -399,6 +399,10 @@ Partial Class CGS_frmEjecutarAjusteCostos
 
             Me.mDeshabilitarTodo()
             Return
+        ElseIf CStr(loFilaQuery("Status")).Trim() <> "Confirmado" Then
+            Me.mMostrarMensajeModal("Operación no permitida", "Debe confirmar la factura de compra para generar el ajuste de costos.", "i")
+
+            Me.mDeshabilitarTodo()
         End If
 
         Me.txtComentario.Text = CStr(loFilaQuery("Comentario")).Trim()
