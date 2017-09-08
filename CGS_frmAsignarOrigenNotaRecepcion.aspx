@@ -149,6 +149,16 @@
 							pnIndiceFilaSeleccionada="0" Width="82%" pnNumeroBotonesAdicionales="1" plBotonNuevaVentanaActivo="False" plBotonNuevaVentanaSiempreHabilitado="False" />
                         
                     </div>
+                    <tr>
+                        <td colspan="2" style="height: 4px"></td>
+                    </tr>
+					<tr>
+						<td colspan="2" style="vertical-align: top; height: 100px">
+							<vis1Controles:lblNormal ID="lblAdvertencia" runat="server" CssClass="Etiqueta" Font-Size="12pt" plBloqueadoParaEditar="False" plBloqueadoParaVer="False" plModoAmbiente="False" plPersonalizarHabilitado="False" plPersonalizarSeleccionado="False" plPersonalizarTitulo="True" plPersonalizarValor="False" plPersonalizarVisible="True" plSugeridoSeleccionado="False" pnTipoControl="KN_Etiqueta" pcNombreFormulario=""></vis1Controles:lblNormal></td>
+					</tr>
+                    <tr>
+                        <td colspan="6" style="height: 4px;"></td>
+                    </tr>
 
 
                 </div>

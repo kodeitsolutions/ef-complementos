@@ -396,6 +396,8 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
     Private Sub grdRenglones_mFilaSeleccionada(lnFilaAnterior As Integer, lnFilaNueva As Integer) Handles grdRenglones.mFilaSeleccionada
         Me.pcRenglonSelected = lnFilaAnterior + 1
 
+        Me.lblAdvertencia.Text = "Se asignará la orden de compra " & Me.TxtBusqueda.pcTexto("Documento") & ", renglón " & Me.pcRenglonSelected & " como origen. "
+
         Me.mValidar()
     End Sub
 
