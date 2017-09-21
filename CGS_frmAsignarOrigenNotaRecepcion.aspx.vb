@@ -20,14 +20,14 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
 
 #Region "Propiedades"
 
-    Private Property plSoloLectura As Boolean
-        Get
-            Return CBool(Me.ViewState("plSoloLectura"))
-        End Get
-        Set(value As Boolean)
-            Me.ViewState("plSoloLectura") = value
-        End Set
-    End Property
+    'Private Property plSoloLectura As Boolean
+    '    Get
+    '        Return CBool(Me.ViewState("plSoloLectura"))
+    '    End Get
+    '    Set(value As Boolean)
+    '        Me.ViewState("plSoloLectura") = value
+    '    End Set
+    'End Property
 
     Private Property pnDecimalesParaCantidad As Integer
         Get
@@ -104,11 +104,12 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
         Me.grdRenglones.mRegistrarColumna("cod_art", "Código", "", True, False, "String", False, 100)
         Me.grdRenglones.mRegistrarColumna("nom_art", "Artículo", "", True, False, "String", False, 300)
         Me.grdRenglones.mRegistrarColumna("can_art", "Cantidad", 0D, True, False, "Decimal", False, 100)
+        Me.grdRenglones.mRegistrarColumna("art_alt", "Alterno", "", True, False, "String", False, 100)
 
         Me.grdRenglones.mLimitarCampoTexto("cod_art", True, 50)
         Me.grdRenglones.mLimitarCampoTexto("nom_art", True, 50)
         Me.grdRenglones.pnDecimalesColumna("can_art") = Me.pnDecimalesParaCantidad
-
+        Me.grdRenglones.mLimitarCampoTexto("art_alt", True, 50)
 
         If Not Me.IsPostBack() Then
 
@@ -161,7 +162,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
     Handles cmdAceptar.Click
 
         If Me.pcRenglonSelected <> 0 Then
-            Dim lcConsultaOrden As String = "SELECT Precio1 FROM Renglones_OCompras WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & "AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected)
+            Dim lcConsultaOrden As String = "SELECT Precio1,Caracter1 FROM Renglones_OCompras WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & "AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected)
 
             Dim loConsultaOrden As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsultaOrden, "Renglones_OCompras").Tables(0)
 
@@ -170,7 +171,9 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
             loConsulta.AppendLine("")
             loConsulta.AppendLine("UPDATE Renglones_Recepciones")
             loConsulta.AppendLine("SET Doc_Ori = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & ",")
-            loConsulta.AppendLine(" Ren_Ori = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected) & ",")
+            If CStr(loConsultaOrden.Rows(0).Item("Caracter1")).Trim() = "" Then
+                loConsulta.AppendLine(" Ren_Ori = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected) & ",")
+            End If
             loConsulta.AppendLine(" Precio1 = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Precio1"))))
             loConsulta.AppendLine("WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.pcOrigenDocumento))
             loConsulta.AppendLine(" AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcOrigenRenglon))
@@ -205,12 +208,17 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
 #Region "Metodos"
 
     Protected Sub mValidar()
-        Dim lcConsultaOrden As String = "SELECT Can_Pen1 FROM Renglones_OCompras WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & "AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected)
+        Dim lcConsultaOrden As String = "SELECT Cod_Art,Can_Pen1, Caracter1 FROM Renglones_OCompras WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & "AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected)
 
         Dim loConsultaOrden As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsultaOrden, "Renglones_OCompras").Tables(0)
 
-        If CDec(loConsultaOrden.Rows(0).Item("Can_Pen1")) > 0 Then
+        Dim lcArticulo As String = Me.lblArticulo.Text.Substring(0, 8)
+
+        If (CDec(loConsultaOrden.Rows(0).Item("Can_Pen1")) > 0 And CStr(loConsultaOrden.Rows(0).Item("Cod_Art")).Trim() = lcArticulo) Then
             Me.mMostrarMensajeModal("Operación no permitida", "El renglón seleccionado todavía tiene pendiente, utilizar opción Anexar Documentos.", "e", True)
+            Me.pcRenglonSelected = 0
+        ElseIf (CStr(loConsultaOrden.Rows(0).Item("Caracter1")).Trim() <> CStr(lcArticulo).Trim() And CStr(loConsultaOrden.Rows(0).Item("Cod_Art")).Trim() <> CStr(lcArticulo).Trim()) Then
+            Me.mMostrarMensajeModal("Operación no permitida", "El artículo recibido no coincide con los artículos de la orden de compra.", "e", True)
             Me.pcRenglonSelected = 0
         End If
 
@@ -353,12 +361,13 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
         lcConsulta.AppendLine("       Renglones_OCompras.Cod_Art    AS Cod_Art,")
         lcConsulta.AppendLine("       Articulos.Nom_Art             AS Nom_Art,")
         lcConsulta.AppendLine("       Renglones_OCompras.Can_Art1   AS Can_Art,")
+        lcConsulta.AppendLine("       Renglones_OCompras.Caracter1  AS Art_Alt,")
         lcConsulta.AppendLine("       Total.numRows					AS Total")
         lcConsulta.AppendLine("FROM Renglones_OCompras")
         lcConsulta.AppendLine(" JOIN Articulos ON Articulos.Cod_Art = Renglones_OCompras.Cod_Art")
         lcConsulta.AppendLine(" CROSS JOIN (SELECT COUNT(*) AS numRows FROM Renglones_OCompras WHERE Documento = " & lcDocumento & ") Total")
         lcConsulta.AppendLine("WHERE Documento = " & lcDocumento)
-        lcConsulta.AppendLine("GROUP BY Renglones_OCompras.Renglon, Renglones_OCompras.Cod_Art, Articulos.Nom_Art,  Renglones_OCompras.Can_Art1, Total.numRows")
+        lcConsulta.AppendLine("GROUP BY Renglones_OCompras.Renglon, Renglones_OCompras.Cod_Art, Articulos.Nom_Art,  Renglones_OCompras.Can_Art1, Total.numRows, Renglones_OCompras.Caracter1")
         lcConsulta.AppendLine("")
         lcConsulta.AppendLine("")
         lcConsulta.AppendLine("")
@@ -375,6 +384,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
         loTabla.Columns.Add(New DataColumn("cod_art", GetType(String)))
         loTabla.Columns.Add(New DataColumn("nom_art", GetType(String)))
         loTabla.Columns.Add(New DataColumn("can_art", GetType(Decimal)))
+        loTabla.Columns.Add(New DataColumn("art_alt", GetType(String)))
 
         For i As Integer = 0 To CDec(loRenglones.Rows(0).Item("Total")) - 1
             Dim loRenglon As DataRow = loTabla.NewRow()
@@ -383,6 +393,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
             loRenglon("cod_art") = CStr(loRenglones.Rows(i).Item("Cod_Art"))
             loRenglon("nom_art") = CStr(loRenglones.Rows(i).Item("Nom_Art"))
             loRenglon("can_art") = CDec(loRenglones.Rows(i).Item("Can_Art"))
+            loRenglon("art_alt") = CStr(loRenglones.Rows(i).Item("Art_Alt"))
 
             loTabla.Rows.Add(loRenglon)
         Next
@@ -394,7 +405,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
     End Sub
 
     Private Sub grdRenglones_mFilaSeleccionada(lnFilaAnterior As Integer, lnFilaNueva As Integer) Handles grdRenglones.mFilaSeleccionada
-        Me.pcRenglonSelected = lnFilaAnterior + 1
+        Me.pcRenglonSelected = Me.grdRenglones.pnIndiceFilaSeleccionada + 1
 
         Me.lblAdvertencia.Text = "Se asignará la orden de compra " & Me.TxtBusqueda.pcTexto("Documento") & ", renglón " & Me.pcRenglonSelected & " como origen. "
 
@@ -402,8 +413,6 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
     End Sub
 
 #End Region
-
-
 
 End Class
 '-------------------------------------------------------------------------------------------'
