@@ -340,7 +340,14 @@ Partial Class CGS_frmEjecutarAjusteInventario
 
             Me.mDeshabilitarTodo()
             Return
+        ElseIf CStr(loTabla.Rows(0).Item("Status")).Trim() <> "Confirmado" Then
+            Me.lblTitulo.Text = "Origen desconocido"
+            Me.mMostrarMensajeModal("Documento bloqueado", "Debe confirmar la nota de recepción para realizar el ajuste.", "a")
+
+            Me.mDeshabilitarTodo()
+            Return
         End If
+
 
         Me.txtComentario.Text = CStr(loFilaQuery("Comentario")).Trim()
 
@@ -368,11 +375,11 @@ Partial Class CGS_frmEjecutarAjusteInventario
         Dim loFilaConsulta As DataRow
         If loTablaConsulta.Rows().Count > 0 Then
             loFilaConsulta = loTablaConsulta.Rows(0)
-            Me.txtCan_Dec.pbValor = goServicios.mObtenerFormatoCadena(CDec(loFilaConsulta("Cantidad")), goServicios.enuOpcionesRedondeo.KN_RedondeoPuntoMedio, goOpciones.pnDecimalesParaMonto)
+            'Me.txtCan_Dec.pbValor = goServicios.mObtenerFormatoCadena(CDec(loFilaConsulta("Cantidad")), goServicios.enuOpcionesRedondeo.KN_RedondeoPuntoMedio, goOpciones.pnDecimalesParaMonto)
+            Me.txtCan_Dec.pbValor = CDec(loFilaConsulta("Cantidad"))
             Me.txtAjs_Dif.pbValor = 0
         End If
 
-        'Me.txtComentario.Text = CBool(loFilaConsulta("Usa_Lot"))
         'Validaciones:
         If (CStr(loFilaConsulta("Estatus")).Trim() = "AJUSTADO") Then
             Me.mMostrarMensajeModal("Documento Bloqueado", "Este renglón ya tiene un Ajuste de Inventario asociado.", "a")
@@ -380,7 +387,7 @@ Partial Class CGS_frmEjecutarAjusteInventario
             Me.mDeshabilitarTodo()
             Return
         End If
-        'VALIDACION DE TIPO DE SERVICIO ¡¡¡QUITAR COMENTARIO!!!
+        'VALIDACION DE TIPO DE SERVICIO Y USO DE LOTES
         Dim lcConsulta As String = "SELECT Tipo, Nom_Art, Usa_Lot FROM Articulos WHERE Cod_Art = " & goServicios.mObtenerCampoFormatoSQL(CStr(loFilaConsulta("Cod_Art")).Trim())
         Dim loDConsulta As New goDatos()
         Dim loTConsulta As DataTable = loDConsulta.mObtenerTodosSinEsquema(lcConsulta, "Articulos").Tables(0)
@@ -391,7 +398,6 @@ Partial Class CGS_frmEjecutarAjusteInventario
             Me.mDeshabilitarTodo()
             Return
         ElseIf (CBool(loTConsulta.Rows(0).Item("Usa_Lot")) = True) Then
-            'Me.txtComentario.Text = CBool(loTConsulta.Rows(0).Item("Usa_Lot"))
             Dim lcConsultaLotes As New StringBuilder()
 
             lcConsultaLotes.AppendLine("SELECT COUNT(Cod_Lot) AS Total")
