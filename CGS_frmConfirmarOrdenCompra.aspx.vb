@@ -15,12 +15,19 @@ Partial Class CGS_frmConfirmarOrdenCompra
 #End Region
 
 #Region "Propiedades"
-
+    Private Property paParametros As Generic.Dictionary(Of String, Object)
+        Get
+            Return Me.ViewState("paParametros")
+        End Get
+        Set(value As Generic.Dictionary(Of String, Object))
+            Me.ViewState("paParametros") = value
+        End Set
+    End Property
 #End Region
 
 #Region "Eventos"
 
-	Protected Sub mCargaPagina(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
+    Protected Sub mCargaPagina(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
 		
 		'La primera vez que se cargue el formulario...
 		If Not Me.IsPostBack() Then
@@ -60,6 +67,8 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 'NOTA: Deben ser nombres de campos índice válidos: dependen del formulairo de origen
 
                 Me.txtDocumento.pcTexto("Documento") = CStr(laIndices("Documento"))
+
+                Me.paParametros = laParametros
 
                 If Me.txtDocumento.mValidarEntrada("Documento") Then
                     Me.txtDocumento_mResultadoBusquedaValido(Me.txtDocumento.mObtenerControl("Documento"), "Documento", 0)
@@ -134,24 +143,81 @@ Partial Class CGS_frmConfirmarOrdenCompra
             End If
         Next
 
-        'If lcConfirmado(0) = True Then
-        '    count += 1
-        'ElseIf lcConfirmado(1) = True Then
-        '    count += 1
-        'ElseIf lcConfirmado(2) = True Then
-        '    count += 1
-        'ElseIf lcConfirmado(3) = True Then
-        '    count += 1
-        'ElseIf lcConfirmado(4) = True Then
-        '    count += 1
-        'ElseIf lcConfirmado(5) = True Then
-        '    count += 1
-        'End If
-
         loSentencias.Length = 0
 
         If count = 2 Then
+            Dim lcConsulta As New StringBuilder()
+            Dim loRenglonesDatos As New goDatos()
+
+            lcConsulta.AppendLine("SELECT   Renglones_OCompras.Renglon,")
+            lcConsulta.AppendLine("         Renglones_OCompras.Cod_Art,")
+            lcConsulta.AppendLine("         Renglones_OCompras.Cod_Alm,")
+            lcConsulta.AppendLine("         Renglones_OCompras.Can_Art1,")
+            lcConsulta.AppendLine("         Renglones_OCompras.Tip_Ori,")
+            lcConsulta.AppendLine("         Renglones_OCompras.Doc_Ori,")
+            lcConsulta.AppendLine("         Renglones_OCompras.Ren_Ori,")
+            lcConsulta.AppendLine("         Articulos.Tipo")
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("FROM Renglones_OCompras")
+            lcConsulta.AppendLine(" JOIN Articulos ON Articulos.Cod_Art = Renglones_OCompras.Cod_Art")
+            lcConsulta.AppendLine("WHERE Documento = " & lcNumero)
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("")
+            lcConsulta.AppendLine("")
+
+            Dim loTablaRenglones As DataSet
+
+            loTablaRenglones = loRenglonesDatos.mObtenerTodosSinEsquema(lcConsulta.ToString(), "Renglones_OCompras")
+
+            For lnNumeroFila As Integer = 0 To loTablaRenglones.Tables(0).Rows.Count - 1
+                Dim ldCantidad As String = goServicios.mObtenerCampoFormatoSQL(CDec(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Can_Art1")))
+                Dim lcDocOri As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Doc_Ori")).Trim())
+                Dim lcRenOri As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Ren_Ori")).Trim())
+
+                loSentencias.AppendLine("UPDATE Renglones_Requisiciones SET Can_Pen1 = Can_Pen1 - " & ldCantidad)
+                loSentencias.AppendLine("WHERE Documento = " & lcDocOri & " AND Renglon = " & lcRenOri)
+                loSentencias.AppendLine("")
+                loSentencias.AppendLine("IF (SELECT SUM(Can_pen1) FROM Renglones_Requisiciones WHERE Documento = " & lcDocOri & ") = 0")
+                loSentencias.AppendLine("BEGIN	")
+                loSentencias.AppendLine("	UPDATE Requisiciones SET Status = 'Procesado' WHERE Documento = " & lcDocOri)
+                loSentencias.AppendLine("END")
+                loSentencias.AppendLine("ELSE")
+                loSentencias.AppendLine("BEGIN	")
+                loSentencias.AppendLine("	UPDATE Requisiciones SET Status = 'Afectado' WHERE Documento = " & lcDocOri)
+                loSentencias.AppendLine("END")
+                loSentencias.AppendLine("")
+
+                If CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Tipo")).Trim() <> "Servicio" Then
+                    Dim lcCodArt As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Cod_Art")).Trim())
+                    Dim lcCodAlm As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Cod_Alm")).Trim())
+
+                    loSentencias.AppendLine("UPDATE Articulos SET Exi_Por1 = Exi_Por1 + " & ldCantidad)
+                    loSentencias.AppendLine("WHERE Cod_Art = " & lcCodArt)
+                    loSentencias.AppendLine("")
+                    loSentencias.AppendLine("IF EXISTS((SELECT * FROM Renglones_Almacenes WHERE Cod_Alm = " & lcCodAlm & " AND Cod_Art = " & lcCodArt & "))")
+                    loSentencias.AppendLine("BEGIN")
+                    loSentencias.AppendLine("   UPDATE Renglones_Almacenes SET Exi_Por1 = Exi_Por1 + " & ldCantidad)
+                    loSentencias.AppendLine("   WHERE Cod_Alm = " & lcCodAlm & " AND Cod_Art = " & lcCodArt)
+                    loSentencias.AppendLine("END")
+                    loSentencias.AppendLine("ELSE")
+                    loSentencias.AppendLine("BEGIN")
+                    loSentencias.AppendLine("	INSERT INTO Renglones_Almacenes (Cod_Alm,Cod_Art,Exi_Por1) VALUES (" & lcCodAlm & "," & lcCodArt & "," & ldCantidad & ")")
+                    loSentencias.AppendLine("END")
+                    loSentencias.AppendLine("")
+                    loSentencias.AppendLine("")
+                    loSentencias.AppendLine("")
+                End If
+            Next lnNumeroFila
+
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Status = 'Confirmado' WHERE Documento = " & lcNumero)
+            loSentencias.AppendLine("")
+            loSentencias.AppendLine("")
+            loSentencias.AppendLine("")
 
             loTransacccion.Add(loSentencias.ToString())
             Try
@@ -172,39 +238,44 @@ Partial Class CGS_frmConfirmarOrdenCompra
         '-------------------------------------------------------------------------------------------'
         ' Prepara la auditoria.																		'
         '-------------------------------------------------------------------------------------------'
-        'Dim lcTipoAuditoria		As String	= "'Datos'"
-        'Dim lcTabla				As String	= "'Cuentas_Pagar'"
-        'Dim lcNombreOpcion		As String	= goServicios.mObtenerCampoFormatoSQL(Me.pcNombreOpcion)
-        'Dim lcAccion			As String	= "'Eliminar'"
-        'Dim lcDocumento			As String	= goServicios.mObtenerCampoFormatoSQL(lcNumero)
-        'Dim lcCodigoRegistro	As String	= "'Sin código'"
-        'Dim lcDetalle			As String	= goServicios.mObtenerCampoFormatoSQL(goAuditoria.KC_DetalleVacio)
-        'Dim lcNombreEquipo		As String	= goServicios.mObtenerCampoFormatoSQL(goAuditoria.pcNombreEquipo)	
-        'Dim lcCodigoObjeto		As String	= goServicios.mObtenerCampoFormatoSQL(TypeName(Me))
-        'Dim lcNotas				As String	= "'Documento Eliminado desde complemento ""Eliminar Cuentas por Pagar"".'"
-        'Dim lcClave2			As String	= goServicios.mObtenerCampoFormatoSQL(lcTipo)
-        'Dim lcClave3			As String	= "''"
-        'Dim lcClave4			As String	= "''"
-        'Dim lcClave5			As String	= "''"
+        Dim lcTipoAuditoria As String = "'Datos'"
+        Dim lcTabla As String = "'Ordenes_Compras'"
+        Dim lcNombreOpcion As String = "'OrdenesCompra'"
+        Dim lcAccion As String = "'Confirmar'"
+        Dim lcDocumento As String = goServicios.mObtenerCampoFormatoSQL(lcNumero)
+        Dim lcCodigoRegistro As String = "'Sin código'"
+        Dim lcDetalle As String = ""
+        If count = 2 Then
+            lcDetalle = goServicios.mObtenerCampoFormatoSQL(goAuditoria.mGenerarCampoDetalle("status", "Pendiente", "Confirmado"))
+        Else
+            lcDetalle = goServicios.mObtenerCampoFormatoSQL(goAuditoria.KC_DetalleVacio)
+        End If
+        Dim lcNombreEquipo As String = goServicios.mObtenerCampoFormatoSQL(goAuditoria.pcNombreEquipo)
+        Dim lcCodigoObjeto As String = goServicios.mObtenerCampoFormatoSQL(TypeName(Me))
+        Dim lcNotas As String = "'Documento Confirmado desde complemento ""Confirmar Orden de Compra"".'"
+        Dim lcClave2 As String = "''"
+        Dim lcClave3 As String = "''"
+        Dim lcClave4 As String = "''"
+        Dim lcClave5 As String = "''"
 
-        'Dim lcInsercionAuditoria As String
-        'lcInsercionAuditoria = goAuditoria.mObtenerCadenaGuardar(	lcTipoAuditoria,	_
-        '														lcTabla,			_
-        '														lcNombreOpcion,		_
-        '														lcAccion,			_
-        '														lcDocumento,		_
-        '														lcCodigoRegistro,	_
-        '														lcDetalle,			_
-        '														lcNombreEquipo,		_
-        '														lcCodigoObjeto,		_
-        '														lcNotas,			_
-        '														lcClave2, lcClave3, lcClave4, lcClave5) 
+        Dim lcInsercionAuditoria As String
+        lcInsercionAuditoria = goAuditoria.mObtenerCadenaGuardar(lcTipoAuditoria, _
+                                                                lcTabla, _
+                                                                lcNombreOpcion, _
+                                                                lcAccion, _
+                                                                lcDocumento, _
+                                                                lcCodigoRegistro, _
+                                                                lcDetalle, _
+                                                                lcNombreEquipo, _
+                                                                lcCodigoObjeto, _
+                                                                lcNotas, _
+                                                                lcClave2, lcClave3, lcClave4, lcClave5)
 
 
         '-------------------------------------------------------------------------------------------
         ' Generalmente se ejecuta mEjecutarOperacion() o mEjecutarTransaccion() en un	
         ' bloque TRY, mostrando el mensaje OK dentro del mismo, el mensaje de error en 
-        ' el CATCH (con un RETURN que tetiene el procedimiento) y luego un segundo bloque 
+        ' el CATCH (con un RETURN que detiene el procedimiento) y luego un segundo bloque 
         ' TRY que guarda las auditorias; en caso de error en el segundo TRY a veces 
         ' mostramos un mensaje y a veces falla en silencio (sin avisar al usuario); pero
         ' no se usa el RETURN.
@@ -230,20 +301,40 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
         'End Try
 
-        'Try
+        Try
 
-        'loDatos.mEjecutarComando(lcInsercionAuditoria)
+            loDatos.mEjecutarComando(lcInsercionAuditoria)
 
-        'Catch loExcepcion As Exception
+        Catch loExcepcion As Exception
 
-        'Un error al guardar la auditoria lo mostramos como mensaje tipo "Advertencia" (si se muestra)
-        'Me.mMostrarMensajeModal("Operación Completada", _
-        '	"El Documento  '" & lcNumero & "' (" &  lcTipo &  ") " & _
-        '	"fue eliminado satisfactoriamente, sin embargo no fue posible guardar el registro de auditoria. <br/>Información Adicional: " &  _
-        '	loExcepcion.Message, "a")
+            ''Un error al guardar la auditoria lo mostramos como mensaje tipo "Advertencia" (si se muestra)
+            Me.mMostrarMensajeModal("Operación Completada", _
+            "El Documento fue confirmado satisfactoriamente, sin embargo no fue posible guardar el registro de auditoria. <br/>Información Adicional: " & _
+            loExcepcion.Message, "a")
 
-        'End Try
+        End Try
 
+
+        Dim lcDoc As String = DirectCast(Me.paParametros("laIndices"), Generic.Dictionary(Of String, Object))("Documento")
+
+        Dim lcTablaEncabezado As String = "[Ordenes_Compras]"
+        Dim lcTablaRenglones As String = "[Renglones_OCompras]"
+        Dim lcFormularioSalida As String = "../../Administrativo/Formularios/frmOperacionOrdenesCompra.aspx"
+        Dim lcCondicionSalida As String = CStr(Me.paParametros("lcCondicion"))
+
+        Try
+
+            Dim lcConsulta As String = "SELECT TOP 1 * FROM " & lcTablaEncabezado & " WHERE " & lcCondicionSalida
+            Dim loTablaDoc As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsulta, lcTabla).Tables(0)
+            If loTablaDoc.Rows.Count > 0 Then
+                goBusquedaRegistro.poRegistroSeleccionado = loTablaDoc.Rows(0)
+            End If
+
+            Me.WbcAdministradorVentanaModal.mMostrarVentanaModal(lcFormularioSalida, "740px", "480px", False, True)
+
+        Catch ex As Exception
+
+        End Try
 
         Me.txtDocumento.mLimpiarCampos()
         'Me.txtCod_Tip.mLimpiarCampos()
