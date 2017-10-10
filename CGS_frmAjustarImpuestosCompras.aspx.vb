@@ -551,9 +551,9 @@ Partial Class CGS_frmAjustarImpuestosCompras
         loConsulta.AppendLine("        Por_Imp2 = @lnPor_Imp2,")
         loConsulta.AppendLine("        Por_Imp3 = @lnPor_Imp3,")
         loConsulta.AppendLine("        Mon_Net  = Mon_Bru + Mon_Rec1 - Mon_Des1 + Mon_Otr1 + Mon_Otr2 + Mon_Otr3 + " & lnTotalImpuesto & ",")
-        If lcTabla.ToLower() = "facturas" Then 
+        If lcTabla.ToLower() = "compras" Then
             loConsulta.AppendLine("        Mon_Sal  = Mon_Bru + Mon_Rec1 - Mon_Des1 + Mon_Otr1 + Mon_Otr2 + Mon_Otr3 + " & lnTotalImpuesto & ",")
-        End If 
+        End If
         loConsulta.AppendLine("        Dis_Imp  = @lcDistribucion")
         loConsulta.AppendLine("FROM    #tblRenglones")
         loConsulta.AppendLine("WHERE   " & lcTablaEncabezado & ".Documento = @lcDocumento;")
