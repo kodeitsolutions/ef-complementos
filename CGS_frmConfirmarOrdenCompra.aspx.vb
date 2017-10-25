@@ -179,18 +179,20 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 Dim lcDocOri As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Doc_Ori")).Trim())
                 Dim lcRenOri As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Ren_Ori")).Trim())
 
-                loSentencias.AppendLine("UPDATE Renglones_Requisiciones SET Can_Pen1 = Can_Pen1 - " & ldCantidad)
-                loSentencias.AppendLine("WHERE Documento = " & lcDocOri & " AND Renglon = " & lcRenOri)
-                loSentencias.AppendLine("")
-                loSentencias.AppendLine("IF (SELECT SUM(Can_pen1) FROM Renglones_Requisiciones WHERE Documento = " & lcDocOri & ") = 0")
-                loSentencias.AppendLine("BEGIN	")
-                loSentencias.AppendLine("	UPDATE Requisiciones SET Status = 'Procesado' WHERE Documento = " & lcDocOri)
-                loSentencias.AppendLine("END")
-                loSentencias.AppendLine("ELSE")
-                loSentencias.AppendLine("BEGIN	")
-                loSentencias.AppendLine("	UPDATE Requisiciones SET Status = 'Afectado' WHERE Documento = " & lcDocOri)
-                loSentencias.AppendLine("END")
-                loSentencias.AppendLine("")
+                If CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Doc_Ori")).Trim() <> "" Then
+                    loSentencias.AppendLine("UPDATE Renglones_Requisiciones SET Can_Pen1 = Can_Pen1 - " & ldCantidad)
+                    loSentencias.AppendLine("WHERE Documento = " & lcDocOri & " AND Renglon = " & lcRenOri)
+                    loSentencias.AppendLine("")
+                    loSentencias.AppendLine("IF (SELECT SUM(Can_pen1) FROM Renglones_Requisiciones WHERE Documento = " & lcDocOri & ") = 0")
+                    loSentencias.AppendLine("BEGIN	")
+                    loSentencias.AppendLine("	UPDATE Requisiciones SET Status = 'Procesado' WHERE Documento = " & lcDocOri)
+                    loSentencias.AppendLine("END")
+                    loSentencias.AppendLine("ELSE")
+                    loSentencias.AppendLine("BEGIN	")
+                    loSentencias.AppendLine("	UPDATE Requisiciones SET Status = 'Afectado' WHERE Documento = " & lcDocOri)
+                    loSentencias.AppendLine("END")
+                    loSentencias.AppendLine("")
+                End If
 
                 If CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Tipo")).Trim() <> "Servicio" Then
                     Dim lcCodArt As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Cod_Art")).Trim())
@@ -220,6 +222,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
             loSentencias.AppendLine("")
 
             loTransacccion.Add(loSentencias.ToString())
+
             Try
                 loDatos.mEjecutarTransaccion(loTransacccion)
                 'Muestra un mensaje tipo "Información" 
@@ -238,11 +241,14 @@ Partial Class CGS_frmConfirmarOrdenCompra
         '-------------------------------------------------------------------------------------------'
         ' Prepara la auditoria.																		'
         '-------------------------------------------------------------------------------------------'
+        Dim laCadenaTransacciones As New ArrayList
+        Dim loEjecutarTransaccion As New cusDatos.goDatos
+
         Dim lcTipoAuditoria As String = "'Datos'"
         Dim lcTabla As String = "'Ordenes_Compras'"
-        Dim lcNombreOpcion As String = "'OrdenesCompra'"
+        Dim lcNombreOpcion As String = goServicios.mObtenerCampoFormatoSQL(Me.pcNombreOpcion)
         Dim lcAccion As String = "'Confirmar'"
-        Dim lcDocumento As String = goServicios.mObtenerCampoFormatoSQL(lcNumero)
+        Dim lcDocumento As String = lcNumero
         Dim lcCodigoRegistro As String = "'Sin código'"
         Dim lcDetalle As String = ""
         If count = 2 Then
@@ -272,34 +278,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
                                                                 lcClave2, lcClave3, lcClave4, lcClave5)
 
 
-        '-------------------------------------------------------------------------------------------
-        ' Generalmente se ejecuta mEjecutarOperacion() o mEjecutarTransaccion() en un	
-        ' bloque TRY, mostrando el mensaje OK dentro del mismo, el mensaje de error en 
-        ' el CATCH (con un RETURN que detiene el procedimiento) y luego un segundo bloque 
-        ' TRY que guarda las auditorias; en caso de error en el segundo TRY a veces 
-        ' mostramos un mensaje y a veces falla en silencio (sin avisar al usuario); pero
-        ' no se usa el RETURN.
-        '-------------------------------------------------------------------------------------------
 
-        '     Try	
-
-        'loDatos.mEjecutarTransaccion(loTransacccion)
-
-        'Muestra un mensaje tipo "Información" 
-        'Me.mMostrarMensajeModal("Operación Completada", _
-        '	"El Documento  '" & lcNumero & "' (" &  lcTipo &  ")" & _
-        '	" fue eliminado satisfactoriamente. ", "i")
-
-        '     Catch loExcepcion As Exception
-
-        ''Un error al ejecutar la transaccion principal lo mostramos como mensaje tipo "Error"
-        'Me.mMostrarMensajeModal("Operación no Completada", _
-        '	"No fue posible completar la eliminación del documento. <br/>Información Adicional:" & _
-        '	loExcepcion.Message, "e")
-
-        'Return
-
-        'End Try
 
         Try
 
@@ -308,41 +287,39 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Catch loExcepcion As Exception
 
             ''Un error al guardar la auditoria lo mostramos como mensaje tipo "Advertencia" (si se muestra)
-            Me.mMostrarMensajeModal("Operación Completada", _
-            "El Documento fue confirmado satisfactoriamente, sin embargo no fue posible guardar el registro de auditoria. <br/>Información Adicional: " & _
-            loExcepcion.Message, "a")
+            Me.mMostrarMensajeModal("Operación Completada", "El Documento fue confirmado satisfactoriamente, sin embargo no fue posible guardar el registro de auditoria. <br/>Información Adicional: " & loExcepcion.Message, "a")
 
         End Try
 
+        If count = 2 Then
+            Dim lcDoc As String = DirectCast(Me.paParametros("laIndices"), Generic.Dictionary(Of String, Object))("Documento")
 
-        Dim lcDoc As String = DirectCast(Me.paParametros("laIndices"), Generic.Dictionary(Of String, Object))("Documento")
+            Dim lcTablaEncabezado As String = "[Ordenes_Compras]"
+            Dim lcTablaRenglones As String = "[Renglones_OCompras]"
+            Dim lcFormularioSalida As String = "../../Administrativo/Formularios/frmOperacionOrdenesCompra.aspx"
+            Dim lcCondicionSalida As String = CStr(Me.paParametros("lcCondicion"))
 
-        Dim lcTablaEncabezado As String = "[Ordenes_Compras]"
-        Dim lcTablaRenglones As String = "[Renglones_OCompras]"
-        Dim lcFormularioSalida As String = "../../Administrativo/Formularios/frmOperacionOrdenesCompra.aspx"
-        Dim lcCondicionSalida As String = CStr(Me.paParametros("lcCondicion"))
+            Try
 
-        Try
+                Dim lcConsulta As String = "SELECT TOP 1 * FROM " & lcTablaEncabezado & " WHERE " & lcCondicionSalida
+                Dim loTablaDoc As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsulta, lcTabla).Tables(0)
+                If loTablaDoc.Rows.Count > 0 Then
+                    goBusquedaRegistro.poRegistroSeleccionado = loTablaDoc.Rows(0)
+                End If
 
-            Dim lcConsulta As String = "SELECT TOP 1 * FROM " & lcTablaEncabezado & " WHERE " & lcCondicionSalida
-            Dim loTablaDoc As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsulta, lcTabla).Tables(0)
-            If loTablaDoc.Rows.Count > 0 Then
-                goBusquedaRegistro.poRegistroSeleccionado = loTablaDoc.Rows(0)
-            End If
+                Me.WbcAdministradorVentanaModal.mMostrarVentanaModal(lcFormularioSalida, "740px", "480px", False, True)
 
-            Me.WbcAdministradorVentanaModal.mMostrarVentanaModal(lcFormularioSalida, "740px", "480px", False, True)
+            Catch ex As Exception
 
-        Catch ex As Exception
-
-        End Try
+            End Try
+        End If
 
         Me.txtDocumento.mLimpiarCampos()
-        'Me.txtCod_Tip.mLimpiarCampos()
         Me.txtProveedor.Text = ""
         Me.cmdAceptar.Enabled = False
         Me.cmdCancelar.Text = "Cerrar"
-	
-	End Sub
+
+    End Sub
 
     Protected Sub txtDocumento_mResultadoBusquedaNoValido(ByVal sender As vis1Controles.txtNormal, ByVal lcNombreCampo As String, ByVal lnIndice As Integer) Handles txtDocumento.mResultadoBusquedaNoValido
 
