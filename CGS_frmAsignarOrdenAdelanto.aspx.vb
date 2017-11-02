@@ -27,6 +27,14 @@ Partial Class CGS_frmAsignarOrdenAdelanto
             Me.ViewState("pcOrigenDocumento") = value
         End Set
     End Property
+    Private Property Proveedor() As String
+        Get
+            Return CStr(Me.ViewState("Proveedor"))
+        End Get
+        Set(ByVal value As String)
+            Me.ViewState("Proveedor") = value
+        End Set
+    End Property
     Private Property Monto() As Decimal
         Get
             Return CDec(Me.ViewState("Monto"))
@@ -76,7 +84,8 @@ Partial Class CGS_frmAsignarOrdenAdelanto
             loConsulta.AppendLine("SELECT	Renglones_Pagos.Cod_Tip	AS Cod_Tip,")
             loConsulta.AppendLine("		    Renglones_Pagos.Doc_Ori	AS Doc_Ori,")
             loConsulta.AppendLine("		    Renglones_Pagos.Mon_Abo	AS Mon_Abo,")
-            loConsulta.AppendLine("         Pagos.Ord_Com           AS Ord_Com")
+            loConsulta.AppendLine("         Pagos.Ord_Com           AS Ord_Com,")
+            loConsulta.AppendLine("         Pagos.Cod_Pro           AS Cod_Pro")
             loConsulta.AppendLine("FROM Renglones_Pagos")
             loConsulta.AppendLine(" JOIN Pagos ON Pagos.Documento = Renglones_Pagos.Documento")
             loConsulta.AppendLine("WHERE Renglones_Pagos.Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.pcOrigenDocumento))
@@ -101,6 +110,7 @@ Partial Class CGS_frmAsignarOrdenAdelanto
             End If
 
             Me.Monto = CDec(loRenglones.Rows(0).Item("Mon_Abo"))
+            Me.Proveedor = CStr(loRenglones.Rows(0).Item("Cod_Pro")).Trim()
 
         End If
 
@@ -229,17 +239,25 @@ Partial Class CGS_frmAsignarOrdenAdelanto
 
     Private Sub TxtBusqueda_mResultadoBusquedaValido(sender As txtNormal, lcNombreCampo As String, lnIndice As Integer) Handles TxtBusqueda.mResultadoBusquedaValido
         'Coloca comentario
+
+        Me.cmdAceptar.Enabled = True
+
         Dim lcDocumento As String = goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento"))
 
-        Dim lcConsultaOrden As String = "SELECT Comentario, Mon_Bru * 0.7 AS Monto_Orden FROM Ordenes_Compras WHERE Documento = " & lcDocumento
+        Dim lcConsultaOrden As String = "SELECT Comentario, Mon_Bru * 0.7 AS Monto_Orden, Cod_Pro FROM Ordenes_Compras WHERE Documento = " & lcDocumento
 
         Dim loTConsulta As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsultaOrden, "Orden").Tables(0)
 
         Me.TxtComentario.Text = CStr(loTConsulta.Rows(0).Item("Comentario")).Trim()
 
+        If Me.Proveedor <> CStr(loTConsulta.Rows(0).Item("Cod_Pro")).Trim() Then
+            Me.mMostrarMensajeModal("Operación no permitida", "El proveedor de la orden de compra es distinto al del adelanto.", "a")
+            Me.cmdAceptar.Enabled = False
+        End If
+
         Dim llValidar As Boolean = CBool(goOpciones.mObtener("VALADLODC", ""))
 
-        If llValidar Then
+            If llValidar Then
             If Me.Monto > CDec(loTConsulta.Rows(0).Item("Monto_Orden")) Then
                 Me.mMostrarMensajeModal("Operación no permitida", "El monto del adelanto es mayor al 70 % de la orden de compra.", "a")
                 Me.cmdAceptar.Enabled = False
