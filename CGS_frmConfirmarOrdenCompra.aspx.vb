@@ -329,6 +329,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Me.txtDocumento.pcTexto("Documento") = ""
 
         Me.txtProveedor.Text = ""
+        Me.TxtComentario.Text = ""
 
     End Sub
 
@@ -352,6 +353,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
         loConsulta.AppendLine("SELECT Ordenes_Compras.Status,")
         loConsulta.AppendLine("       Ordenes_Compras.Cod_Pro,")
+        loConsulta.AppendLine("       Ordenes_Compras.Comentario,")
         loConsulta.AppendLine("       Proveedores.Nom_Pro,")
         loConsulta.AppendLine("       Ordenes_Compras.logico1 AS mgentili,")
         loConsulta.AppendLine("       Ordenes_Compras.logico2 AS ssimanca,")
@@ -397,6 +399,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
             Return
         Else
             Me.txtProveedor.Text = CStr(loTabla.Rows(0).Item("Cod_Pro")).Trim() & " - " & CStr(loTabla.Rows(0).Item("Nom_Pro")).Trim()
+            Me.TxtComentario.Text = CStr(loTabla.Rows(0).Item("Comentario")).Trim()
         End If
     End Sub
 	

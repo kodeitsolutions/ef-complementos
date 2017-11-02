@@ -51,12 +51,12 @@
                     <div class="divCuerpoComplemento">
                     <table style="border-collapse: collapse;table-layout: fixed; width: 507px;" >
                         <tr>
-                            <td style="height: 4px; width: 150px;"></td>
+                            <td style="height: 4px; width: 100px;"></td>
 							<td style="height: 4px; width: 400px"></td>
                         </tr>
                         <tr>
 							<td class="SeparadorSeccionesFormularios" colspan="2">
-                                <vis1Controles:lblNormal runat="server" ID="lblTitulo" Text="Eliminar Cuentas por Pagar" CssClass="TituloPanel" plBloqueadoParaEditar="False" plBloqueadoParaVer="False" plModoAmbiente="False" plPersonalizarHabilitado="False" plPersonalizarSeleccionado="False" plPersonalizarTitulo="True" plPersonalizarValor="False" plPersonalizarVisible="True" plSugeridoSeleccionado="False" pnTipoControl="KN_Etiqueta" pcNombreFormulario="" /></td>
+                                <vis1Controles:lblNormal runat="server" ID="lblTitulo" Text="Confirmar Orden de Compra" CssClass="TituloPanel" plBloqueadoParaEditar="False" plBloqueadoParaVer="False" plModoAmbiente="False" plPersonalizarHabilitado="False" plPersonalizarSeleccionado="False" plPersonalizarTitulo="True" plPersonalizarValor="False" plPersonalizarVisible="True" plSugeridoSeleccionado="False" pnTipoControl="KN_Etiqueta" pcNombreFormulario="" /></td>
                         </tr>
                         <tr>
                             <td style="height: 8px;" colspan="2"></td>
@@ -66,7 +66,7 @@
 						</tr>
 						<tr>
 							<td>
-								<vis1Controles:lblNormal ID="lblNumeroDocumento" runat="server" CssClass="Etiqueta" plBloqueadoParaEditar="False" plBloqueadoParaVer="False" plModoAmbiente="False" plPersonalizarHabilitado="False" plPersonalizarSeleccionado="False" plPersonalizarTitulo="True" plPersonalizarValor="False" plPersonalizarVisible="True" plSugeridoSeleccionado="False" pnTipoControl="KN_Etiqueta">Número de Documento:</vis1Controles:lblNormal></td>
+								<vis1Controles:lblNormal ID="lblNumeroDocumento" runat="server" CssClass="Etiqueta" plBloqueadoParaEditar="False" plBloqueadoParaVer="False" plModoAmbiente="False" plPersonalizarHabilitado="False" plPersonalizarSeleccionado="False" plPersonalizarTitulo="True" plPersonalizarValor="False" plPersonalizarVisible="True" plSugeridoSeleccionado="False" pnTipoControl="KN_Etiqueta">Documento:</vis1Controles:lblNormal></td>
 							<td>
 								<vis3Controles:txtCampoBusqueda ID="txtDocumento" runat="server" CssClass="CajasTexto" plAutoPostBack="True" plValidarAutomaticamente="True" pnNumeroCampos="1" poAncho="100px" />
 							</td>
@@ -79,6 +79,15 @@
 							<td>
 								<vis1Controles:txtNormal ID="txtProveedor" Width="350" runat="server" CssClass="CajasTexto" Enabled="False" plPermitirComillas="False" plSeleccionarAlObtenerFoco="True" ReadOnly="True"></vis1Controles:txtNormal></td>
                         </tr>
+                        <tr>
+							<td colspan="2" style="height: 4px"></td>
+                        </tr>
+                        <tr>
+                                <td style="vertical-align:top;><vis1Controles:lblNormal runat="server" ID="lblComentario" Text="Comentario:" CssClass="Etiqueta"></vis1Controles:lblNormal></td>
+                                <td>
+                                    <vis1Controles:txtNormal runat="server" ID="TxtComentario" CssClass="CajasTexto" Width="350" Height="70px" Enabled="False" TextMode="MultiLine"></vis1Controles:txtNormal>
+                                </td>
+                            </tr>
                     </table>
 
                     </div>
