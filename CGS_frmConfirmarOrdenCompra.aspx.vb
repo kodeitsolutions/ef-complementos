@@ -93,6 +93,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Dim loSentencias As New StringBuilder()
         Dim loTransacccion As New ArrayList()
 
+        'Colocar marca de confirmación según usuario 
         If (lcUsuario = "mgentili") Then
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Logico1 = 1, Fecha1 = " & ldFecha & " WHERE Documento = " & lcNumero)
         ElseIf (lcUsuario = "ssimanca") Then
@@ -109,17 +110,17 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
         Try
             loDatos.mEjecutarTransaccion(loTransacccion)
-            'Muestra un mensaje tipo "Información" 
-            Me.mMostrarMensajeModal("Operación Completada", "El Documento fue confirmado satisfactoriamente. ", "i")
+
         Catch loExcepcion As Exception
-            'Un error al ejecutar la transaccion principal lo mostramos como mensaje tipo "Error"
             Me.mMostrarMensajeModal("Operación no Completada", _
                     "No fue posible completar la confirmación del documento. <br/>Información Adicional:" & _
                     loExcepcion.Message, "e")
+            Return
         End Try
 
         loSentencias.Length = 0
 
+        'Verificar cantidad de confirmaciones que lleva el documento
         loSentencias.AppendLine("SELECT logico1 AS mgentili, logico2 AS ssimanca, logico3 AS dmatheus, logico4 AS yreina,logico5 AS kodeitsu")
         loSentencias.AppendLine("FROM Ordenes_Compras")
         loSentencias.AppendLine("WHERE Documento = " & lcNumero)
@@ -136,19 +137,22 @@ Partial Class CGS_frmConfirmarOrdenCompra
         lcConfirmado(3) = loTabla.Rows(0).Item("yreina")
         lcConfirmado(4) = loTabla.Rows(0).Item("kodeitsu")
 
-        Dim count As Integer = 0D
+        Dim lnCount As Integer = 0D
         For index As Integer = 0 To lcConfirmado.GetUpperBound(0)
             If lcConfirmado(index) = True Then
-                count += 1
+                lnCount += 1
             End If
         Next
 
         loSentencias.Length = 0
 
-        If count = 2 Then
+        If lnCount = 1 Then 'Si el documento ha sido confirmado una sola vez se notifica su confirmación exitosa
+            Me.mMostrarMensajeModal("Operación Completada", "El Documento fue confirmado satisfactoriamente. ", "i")
+        ElseIf lnCount = 2 Then 'Si el documento se confirmó dos veces
             Dim lcConsulta As New StringBuilder()
             Dim loRenglonesDatos As New goDatos()
 
+            'Traer renglones para verificar si el documento tiene asociado requision interna
             lcConsulta.AppendLine("SELECT   Renglones_OCompras.Renglon,")
             lcConsulta.AppendLine("         Renglones_OCompras.Cod_Art,")
             lcConsulta.AppendLine("         Renglones_OCompras.Cod_Alm,")
@@ -157,10 +161,6 @@ Partial Class CGS_frmConfirmarOrdenCompra
             lcConsulta.AppendLine("         Renglones_OCompras.Doc_Ori,")
             lcConsulta.AppendLine("         Renglones_OCompras.Ren_Ori,")
             lcConsulta.AppendLine("         Articulos.Tipo")
-            lcConsulta.AppendLine("")
-            lcConsulta.AppendLine("")
-            lcConsulta.AppendLine("")
-            lcConsulta.AppendLine("")
             lcConsulta.AppendLine("FROM Renglones_OCompras")
             lcConsulta.AppendLine(" JOIN Articulos ON Articulos.Cod_Art = Renglones_OCompras.Cod_Art")
             lcConsulta.AppendLine("WHERE Documento = " & lcNumero)
@@ -180,6 +180,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 Dim lcRenOri As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Ren_Ori")).Trim())
 
                 If CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Doc_Ori")).Trim() <> "" Then
+                    'Rebajar cantidades pendientes de requisicion y cambiar estatus
                     loSentencias.AppendLine("UPDATE Renglones_Requisiciones SET Can_Pen1 = Can_Pen1 - " & ldCantidad)
                     loSentencias.AppendLine("WHERE Documento = " & lcDocOri & " AND Renglon = " & lcRenOri)
                     loSentencias.AppendLine("")
@@ -195,6 +196,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 End If
 
                 If CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Tipo")).Trim() <> "Servicio" Then
+                    'Rebajar cantidades por llegar en articulo y almacen
                     Dim lcCodArt As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Cod_Art")).Trim())
                     Dim lcCodAlm As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Cod_Alm")).Trim())
 
@@ -216,6 +218,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 End If
             Next lnNumeroFila
 
+            'Cambiar estatus de la orden de compra a Confirmado
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Status = 'Confirmado' WHERE Documento = " & lcNumero)
             loSentencias.AppendLine("")
             loSentencias.AppendLine("")
@@ -225,7 +228,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
             Try
                 loDatos.mEjecutarTransaccion(loTransacccion)
-                'Muestra un mensaje tipo "Información" 
+
                 Me.mMostrarMensajeModal("Operación Completada", "El Documento fue confirmado satisfactoriamente. ", "i")
             Catch loExcepcion As Exception
                 'Un error al ejecutar la transaccion principal lo mostramos como mensaje tipo "Error"
@@ -251,7 +254,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Dim lcDocumento As String = lcNumero
         Dim lcCodigoRegistro As String = "'Sin código'"
         Dim lcDetalle As String = ""
-        If count = 2 Then
+        If lnCount = 2 Then
             lcDetalle = goServicios.mObtenerCampoFormatoSQL(goAuditoria.mGenerarCampoDetalle("status", "Pendiente", "Confirmado"))
         Else
             lcDetalle = goServicios.mObtenerCampoFormatoSQL(goAuditoria.KC_DetalleVacio)
@@ -281,17 +284,16 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
 
         Try
-
+            'Inserción de auditoria
             loDatos.mEjecutarComando(lcInsercionAuditoria)
 
         Catch loExcepcion As Exception
 
-            ''Un error al guardar la auditoria lo mostramos como mensaje tipo "Advertencia" (si se muestra)
             Me.mMostrarMensajeModal("Operación Completada", "El Documento fue confirmado satisfactoriamente, sin embargo no fue posible guardar el registro de auditoria. <br/>Información Adicional: " & loExcepcion.Message, "a")
 
         End Try
 
-        If count = 2 Then
+        If lnCount = 2 Then
             Dim lcDoc As String = DirectCast(Me.paParametros("laIndices"), Generic.Dictionary(Of String, Object))("Documento")
 
             Dim lcTablaEncabezado As String = "[Ordenes_Compras]"
@@ -339,9 +341,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Dim lcNumero As String = Strings.Trim(Me.txtDocumento.pcTexto("Documento"))
         Dim lcUsuario As String = goUsuario.pcCodigo
 
-        '-------------------------------------------------------------------------------------------
         ' Verifica que el usuario tenga permitido confirmar.
-        '-------------------------------------------------------------------------------------------
         If (lcUsuario <> "mgentili" And lcUsuario <> "ssimanca" And lcUsuario <> "dmatheus" And lcUsuario <> "yreina" And lcUsuario <> "kodeitsu") Then
 
             Me.mMostrarMensajeModal("Operación no Completada", "Usted no tiene permisos para confirmar la orden de compra. ", "a")
