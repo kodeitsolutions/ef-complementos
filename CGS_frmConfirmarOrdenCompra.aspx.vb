@@ -98,7 +98,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Logico1 = 1, Fecha1 = " & ldFecha & " WHERE Documento = " & lcNumero)
         ElseIf (lcUsuario = "ssimanca") Then
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Logico2 = 1, Fecha2 = " & ldFecha & " WHERE Documento = " & lcNumero)
-        ElseIf (lcUsuario = "dmatheus") Then
+        ElseIf (lcUsuario = "lcarrizal") Then
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Logico3 = 1, Fecha3 = " & ldFecha & " WHERE Documento = " & lcNumero)
         ElseIf (lcUsuario = "yreina") Then
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Logico4 = 1, Fecha4 = " & ldFecha & " WHERE Documento = " & lcNumero)
@@ -121,7 +121,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         loSentencias.Length = 0
 
         'Verificar cantidad de confirmaciones que lleva el documento
-        loSentencias.AppendLine("SELECT logico1 AS mgentili, logico2 AS ssimanca, logico3 AS dmatheus, logico4 AS yreina,logico5 AS kodeitsu")
+        loSentencias.AppendLine("SELECT logico1 AS mgentili, logico2 AS ssimanca, logico3 AS lcarrizal, logico4 AS yreina,logico5 AS kodeitsu")
         loSentencias.AppendLine("FROM Ordenes_Compras")
         loSentencias.AppendLine("WHERE Documento = " & lcNumero)
         loSentencias.AppendLine("")
@@ -133,7 +133,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Dim lcConfirmado(5) As Boolean
         lcConfirmado(0) = loTabla.Rows(0).Item("mgentili")
         lcConfirmado(1) = loTabla.Rows(0).Item("ssimanca")
-        lcConfirmado(2) = loTabla.Rows(0).Item("dmatheus")
+        lcConfirmado(2) = loTabla.Rows(0).Item("lcarrizal")
         lcConfirmado(3) = loTabla.Rows(0).Item("yreina")
         lcConfirmado(4) = loTabla.Rows(0).Item("kodeitsu")
 
@@ -342,7 +342,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Dim lcUsuario As String = goUsuario.pcCodigo
 
         ' Verifica que el usuario tenga permitido confirmar.
-        If (lcUsuario <> "mgentili" And lcUsuario <> "ssimanca" And lcUsuario <> "dmatheus" And lcUsuario <> "yreina" And lcUsuario <> "kodeitsu") Then
+        If (lcUsuario <> "mgentili" And lcUsuario <> "ssimanca" And lcUsuario <> "lcarrizal" And lcUsuario <> "yreina" And lcUsuario <> "kodeitsu") Then
 
             Me.mMostrarMensajeModal("Operación no Completada", "Usted no tiene permisos para confirmar la orden de compra. ", "a")
             Return
@@ -358,7 +358,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         loConsulta.AppendLine("       Proveedores.Nom_Pro,")
         loConsulta.AppendLine("       Ordenes_Compras.logico1 AS mgentili,")
         loConsulta.AppendLine("       Ordenes_Compras.logico2 AS ssimanca,")
-        loConsulta.AppendLine("       Ordenes_Compras.logico3 AS dmatheus,")
+        loConsulta.AppendLine("       Ordenes_Compras.logico3 AS lcarrizal,")
         loConsulta.AppendLine("       Ordenes_Compras.logico4 AS yreina,")
         loConsulta.AppendLine("       Ordenes_Compras.logico5 AS kodeitsu")
         loConsulta.AppendLine("FROM Ordenes_Compras")
@@ -383,7 +383,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
             Me.cmdAceptar.Enabled = False
             Me.cmdCancelar.Text = "Cerrar"
             Return
-        ElseIf (CBool(loTabla.Rows(0).Item("dmatheus")) = True And lcUsuario = "dmatheus") Then
+        ElseIf (CBool(loTabla.Rows(0).Item("lcarrizal")) = True And lcUsuario = "lcarrizal") Then
             Me.mMostrarMensajeModal("Advertencia", "El Documento ya fue confirmado por usted.", "a")
             Me.cmdAceptar.Enabled = False
             Me.cmdCancelar.Text = "Cerrar"
