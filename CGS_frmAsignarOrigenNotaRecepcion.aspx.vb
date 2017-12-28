@@ -162,9 +162,12 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
     Handles cmdAceptar.Click
 
         If Me.pcRenglonSelected <> 0 Then
-            Dim lcConsultaOrden As String = "SELECT Precio1,Caracter1 FROM Renglones_OCompras WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & "AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected)
+            Dim lcConsultaOrden As String = "SELECT Precio1, Can_Art1, Cod_Imp, Por_Imp1, Caracter1 FROM Renglones_OCompras WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & "AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected)
 
             Dim loConsultaOrden As DataTable = (New goDatos()).mObtenerTodosSinEsquema(lcConsultaOrden, "Renglones_OCompras").Tables(0)
+
+            Dim lcRecepcion As String = goServicios.mObtenerCampoFormatoSQL(Me.pcOrigenDocumento)
+            Dim lcRenglonRecepcion As String = goServicios.mObtenerCampoFormatoSQL(Me.pcOrigenRenglon)
 
             Dim loConsulta As New StringBuilder()
 
@@ -174,9 +177,25 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
             If CStr(loConsultaOrden.Rows(0).Item("Caracter1")).Trim() = "" Then
                 loConsulta.AppendLine(" Ren_Ori = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected) & ",")
             End If
-            loConsulta.AppendLine(" Precio1 = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Precio1"))))
-            loConsulta.AppendLine("WHERE Documento = " & goServicios.mObtenerCampoFormatoSQL(Me.pcOrigenDocumento))
-            loConsulta.AppendLine(" AND Renglon = " & goServicios.mObtenerCampoFormatoSQL(Me.pcOrigenRenglon))
+            loConsulta.AppendLine(" Precio1 = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Precio1"))) & ",")
+            loConsulta.AppendLine(" Cod_Imp = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Cod_Imp"))) & ",")
+            loConsulta.AppendLine(" Por_Imp1 = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Por_Imp1"))))
+            loConsulta.AppendLine("WHERE Documento = " & lcRecepcion)
+            loConsulta.AppendLine(" AND Renglon = " & lcRenglonRecepcion)
+            loConsulta.AppendLine("")
+            loConsulta.AppendLine("UPDATE Renglones_Recepciones SET Mon_Bru = Can_Art1 * Precio1 WHERE Documento = " & lcRecepcion & "AND Renglon = " & lcRenglonRecepcion)
+            loConsulta.AppendLine("")
+            loConsulta.AppendLine("UPDATE Renglones_Recepciones SET Mon_Imp1 = Mon_Bru * (Por_Imp1 / 100), Mon_Net = Mon_Bru WHERE Documento = " & lcRecepcion & "AND Renglon = " & lcRenglonRecepcion)
+            loConsulta.AppendLine("")
+            loConsulta.AppendLine("UPDATE Recepciones SET Mon_Bru = (SELECT SUM(Mon_Bru) FROM Renglones_Recepciones")
+            loConsulta.AppendLine("                                 WHERE Documento = " & lcRecepcion & "AND Renglon = " & lcRenglonRecepcion & ")")
+            loConsulta.AppendLine("WHERE Documento = " & lcRecepcion)
+            loConsulta.AppendLine("")
+            loConsulta.AppendLine("UPDATE Recepciones SET Mon_Imp1 = (SELECT SUM(Mon_Imp1) FROM Renglones_Recepciones")
+            loConsulta.AppendLine("                                 WHERE Documento = " & lcRecepcion & "AND Renglon = " & lcRenglonRecepcion & ")")
+            loConsulta.AppendLine("WHERE Documento = " & lcRecepcion)
+            loConsulta.AppendLine("")
+            loConsulta.AppendLine("UPDATE Recepciones SET Mon_Net = Mon_Bru + Mon_Imp1 WHERE Documento = " & lcRecepcion)
             loConsulta.AppendLine("")
 
             Dim lodatos As New goDatos()
@@ -189,6 +208,9 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
                 Me.mCargarTablaVacia()
 
                 Me.mMostrarMensajeModal("Origen asignado", "Se asignó la orden de compra " & Me.TxtBusqueda.pcTexto("Documento") & ", renglón " & Me.pcRenglonSelected & " como origen. ", "i", False)
+
+                Me.cmdAceptar.Enabled = False
+                Me.cmdCancelar.Text = "Cerrar"
 
             Catch ex As Exception
 
