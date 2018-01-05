@@ -87,7 +87,7 @@ Partial Class CGS_frmAsignarArticuloAlterno
 
 
             Dim loRenglones As DataTable = (New goDatos()).mObtenerTodosSinEsquema(loConsulta.ToString(), "Renglones_OCompras").Tables(0)
-
+            'VERIFICA QUE EL RENGLÓN SELECCIONADO NO TENGA YA UN ARTICULO ALTERNO
             If CStr(loRenglones.Rows(0).Item("Art_Alt")).Trim() <> "" Then
                 Me.mMostrarMensajeModal("Operación no permitida", "Este renglón ya tiene un artículo alterno.", "a")
                 Me.cmdAceptar.Enabled = False
@@ -120,7 +120,7 @@ Partial Class CGS_frmAsignarArticuloAlterno
             Try
                 Dim laSentencias As New ArrayList()
                 laSentencias.Add(loConsulta.ToString())
-
+                'EJECUTAR EL UPDATE, EL ARTÍCULO ALTERNO SE GUARDA EN EL CAMPO caracter1
                 lodatos.mEjecutarTransaccion(laSentencias)
 
                 Me.mMostrarMensajeModal("Artículo asignado", "Se asignó el artículo " & Me.txtCod_Art.pcTexto("Cod_Art") & " - " & Me.txtCod_Art.pcTexto("Nom_Art") & " como alterno. ", "i", False)
@@ -231,6 +231,7 @@ Partial Class CGS_frmAsignarArticuloAlterno
 
     End Sub
 
+    'SI LA BÚSQUEDA ES VÁLIDA SE MUESTRA UNA ADVERTENCIA DEL ARTÍCULO QUE SE VA A ASIGNAR
     Protected Sub txtCod_Art_mResultadoBusquedaValido(ByVal sender As vis1Controles.txtNormal, lcNombreCampo As String, lnIndice As Integer) Handles txtCod_Art.mResultadoBusquedaValido
         Me.lblAdvertencia.Text = "Se asignará el artículo " & Me.txtCod_Art.pcTexto("Cod_Art") & " - " & Me.txtCod_Art.pcTexto("Nom_Art") & " como alterno. "
 

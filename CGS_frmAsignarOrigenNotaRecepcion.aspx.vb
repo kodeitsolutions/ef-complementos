@@ -20,15 +20,6 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
 
 #Region "Propiedades"
 
-    'Private Property plSoloLectura As Boolean
-    '    Get
-    '        Return CBool(Me.ViewState("plSoloLectura"))
-    '    End Get
-    '    Set(value As Boolean)
-    '        Me.ViewState("plSoloLectura") = value
-    '    End Set
-    'End Property
-
     Private Property pnDecimalesParaCantidad As Integer
         Get
             Return CInt(Me.ViewState("pnDecimalesParaCantidad"))
@@ -129,15 +120,16 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
             loConsulta.AppendLine("")
             loConsulta.AppendLine("")
 
-
             Dim loRenglones As DataTable = (New goDatos()).mObtenerTodosSinEsquema(loConsulta.ToString(), "Renglones_Recepciones").Tables(0)
 
+            'VERIFICAR QUE EL RENGLÓN SELECCIONADO NO TENGA UN ORIGEN AGIGNADO
             If CStr(loRenglones.Rows(0).Item("Doc_Ori")).Trim() <> "" Then
                 Me.mMostrarMensajeModal("Operación no permitida", "Este renglón ya tiene un origen asociado.", "a")
                 Me.cmdAceptar.Enabled = False
                 Return
             End If
 
+            'COLOCAR DATOS DE ARTÍCULO, ALMACÉN, RENGLÓN Y CANTIDAD DE LA FILA DESDE LA CUAL SE EJECUTÓ EL COMPLEMENTO
             Me.lblArticulo.Text = CStr(loRenglones.Rows(0).Item("Cod_Art")).Trim() & ":  " & CStr(loRenglones.Rows(0).Item("Nom_Art")).Trim()
             Me.lblAlmacen.Text = CStr(loRenglones.Rows(0).Item("Cod_Alm")).Trim() & ":  " & CStr(loRenglones.Rows(0).Item("Nom_Alm")).Trim()
             Me.lblRenglon.Text = " " & Me.pcOrigenRenglon
@@ -174,9 +166,11 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
             loConsulta.AppendLine("")
             loConsulta.AppendLine("UPDATE Renglones_Recepciones")
             loConsulta.AppendLine("SET Doc_Ori = " & goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento")) & ",")
+            'SI EL ARTÍCULO DE LA ORDEN NO TIENE ARTÍCULO ALTERNO SE ASIGNA EL RENGLÓN DE ORIGEN
             If CStr(loConsultaOrden.Rows(0).Item("Caracter1")).Trim() = "" Then
                 loConsulta.AppendLine(" Ren_Ori = " & goServicios.mObtenerCampoFormatoSQL(Me.pcRenglonSelected) & ",")
             End If
+            'SE ACTUALIZAN DATOS DE PRECIO, IMPUESTO Y MONTOS SEGÚN LA INFORMACIÓN DE LA ORDEN DE COMPRA
             loConsulta.AppendLine(" Precio1 = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Precio1"))) & ",")
             loConsulta.AppendLine(" Cod_Imp = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Cod_Imp"))) & ",")
             loConsulta.AppendLine(" Por_Imp1 = " & goServicios.mObtenerCampoFormatoSQL(CDec(loConsultaOrden.Rows(0).Item("Por_Imp1"))))
@@ -237,9 +231,11 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
         Dim lcArticulo As String = Me.lblArticulo.Text.Substring(0, 8)
 
         If (CDec(loConsultaOrden.Rows(0).Item("Can_Pen1")) > 0 And CStr(loConsultaOrden.Rows(0).Item("Cod_Art")).Trim() = lcArticulo) Then
+            'SI LA CANTIDAD PENDIENTE DEL RENGLÓN SELECCIONADO COMO ORIGEN ES MAYOR A CERO NO PERMITE ASIGNARLO
             Me.mMostrarMensajeModal("Operación no permitida", "El renglón seleccionado todavía tiene pendiente, utilizar opción Anexar Documentos.", "e", True)
             Me.pcRenglonSelected = 0
         ElseIf (CStr(loConsultaOrden.Rows(0).Item("Caracter1")).Trim() <> CStr(lcArticulo).Trim() And CStr(loConsultaOrden.Rows(0).Item("Cod_Art")).Trim() <> CStr(lcArticulo).Trim()) Then
+            'VERIFICA QUE EL ARTÍCULO DE LA RECEPCIÓN COINCIDA CON EL ARTÍCULO DE LA ORDEN DE COMPRA O SU ARTÍCULO ALTERNO
             Me.mMostrarMensajeModal("Operación no permitida", "El artículo recibido no coincide con los artículos de la orden de compra.", "e", True)
             Me.pcRenglonSelected = 0
         End If
@@ -247,7 +243,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
     End Sub
 
     ''' <summary>
-    ''' Carga la tabla inicial en blanco para el grid de artículos.
+    ''' Carga la tabla inicial en blanco para el grid de renglones.
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub mCargarTablaVacia()
@@ -260,7 +256,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
         loTabla.Columns.Add(New DataColumn("nom_art", GetType(String)))
         loTabla.Columns.Add(New DataColumn("can_art", GetType(Decimal)))
 
-        For i As Integer = 1 To KN_CANTIDAD_RENGLONES_LOTE 'CDec(loRenglones.Rows(0).Item("Total"))
+        For i As Integer = 1 To KN_CANTIDAD_RENGLONES_LOTE
             Dim loRenglon As DataRow = loTabla.NewRow()
 
             loRenglon("Renglon") = i
@@ -367,7 +363,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
     End Sub
 
     Private Sub TxtBusqueda_mResultadoBusquedaValido(sender As txtNormal, lcNombreCampo As String, lnIndice As Integer) Handles TxtBusqueda.mResultadoBusquedaValido
-        'Coloca comentario
+        'COLOCAR COMENTARIO
         Dim lcDocumento As String = goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento"))
 
         Dim lcConsultaOrden As String = "SELECT Comentario FROM Ordenes_Compras WHERE Documento = " & lcDocumento
@@ -376,18 +372,16 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
 
         Me.TxtComentario.Text = CStr(loTConsulta.Rows(0).Item("Comentario")).Trim()
 
-        'Llena renglones
+        'LLENAR RENGLONES CON LA INFORMACIÓN DE LA ORDEN DE COMPRA SELECCIONADA
         Dim lcConsulta As New StringBuilder()
 
         lcConsulta.AppendLine("SELECT Renglones_OCompras.Renglon    AS Renglon,")
         lcConsulta.AppendLine("       Renglones_OCompras.Cod_Art    AS Cod_Art,")
         lcConsulta.AppendLine("       Articulos.Nom_Art             AS Nom_Art,")
         lcConsulta.AppendLine("       Renglones_OCompras.Can_Art1   AS Can_Art,")
-        lcConsulta.AppendLine("       Renglones_OCompras.Caracter1  AS Art_Alt,")
-        lcConsulta.AppendLine("       Total.numRows					AS Total")
+        lcConsulta.AppendLine("       Renglones_OCompras.Caracter1  AS Art_Alt")
         lcConsulta.AppendLine("FROM Renglones_OCompras")
         lcConsulta.AppendLine(" JOIN Articulos ON Articulos.Cod_Art = Renglones_OCompras.Cod_Art")
-        lcConsulta.AppendLine(" CROSS JOIN (SELECT COUNT(*) AS numRows FROM Renglones_OCompras WHERE Documento = " & lcDocumento & ") Total")
         lcConsulta.AppendLine("WHERE Documento = " & lcDocumento)
         lcConsulta.AppendLine("GROUP BY Renglones_OCompras.Renglon, Renglones_OCompras.Cod_Art, Articulos.Nom_Art,  Renglones_OCompras.Can_Art1, Total.numRows, Renglones_OCompras.Caracter1")
         lcConsulta.AppendLine("")
@@ -408,7 +402,7 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
         loTabla.Columns.Add(New DataColumn("can_art", GetType(Decimal)))
         loTabla.Columns.Add(New DataColumn("art_alt", GetType(String)))
 
-        For i As Integer = 0 To CDec(loRenglones.Rows(0).Item("Total")) - 1
+        For i As Integer = 0 To loRenglones.Rows.Count - 1
             Dim loRenglon As DataRow = loTabla.NewRow()
 
             loRenglon("Renglon") = CDec(loRenglones.Rows(i).Item("Renglon"))

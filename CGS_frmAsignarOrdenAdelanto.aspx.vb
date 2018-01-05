@@ -93,11 +93,13 @@ Partial Class CGS_frmAsignarOrdenAdelanto
 
             Dim loRenglones As DataTable = (New goDatos()).mObtenerTodosSinEsquema(loConsulta.ToString(), "Renglones_Recepciones").Tables(0)
 
+            'SI TRAE MAS DE UN RENGLON SE SABE QUE NO CORRESPONDE A UN ADELANTO
             If loRenglones.Rows.Count > 1 Then
                 Me.mMostrarMensajeModal("Operación no permitida", "Solo se puede asignar la orden de compra a un adelanto.", "a")
                 Me.cmdAceptar.Enabled = False
                 Return
             Else
+                'SE VERIFICA EL TIPO DE DOCUMENTO EN EL PAGO PARA CORROBORAR QUE SEA UN ADELANTO
                 If CStr(loRenglones.Rows(0).Item("Cod_Tip")).Trim() <> "ADEL" Then
                     Me.mMostrarMensajeModal("Operación no permitida", "Solo se puede asignar la orden de compra a un adelanto.", "a")
                     Me.cmdAceptar.Enabled = False
@@ -105,6 +107,7 @@ Partial Class CGS_frmAsignarOrdenAdelanto
                 End If
             End If
 
+            'SI EL ADELANTO YA TIENE UNA ORDEN DE COMPRA SE NOTIFICA CON UNA ADVERTENCIA
             If CStr(loRenglones.Rows(0).Item("Ord_Com")).Trim() <> "" Then
                 Me.lblAdvertencia.Text = "Este adelanto ya tiene asociada la orden de compra " & CStr(loRenglones.Rows(0).Item("Ord_Com")).Trim() & "."
             End If
@@ -132,7 +135,7 @@ Partial Class CGS_frmAsignarOrdenAdelanto
         Try
             Dim laSentencias As New ArrayList()
             laSentencias.Add(loConsulta.ToString())
-
+            'EJECUTAR EL UPDATE PARA GUARDAR EL NÚMERO DE ORDEN DE COMPRA. EL VALOR SE GUARDA EN EL CAMPO ord_com DE LA TABLA PAGOS
             lodatos.mEjecutarTransaccion(laSentencias)
 
             Me.mMostrarMensajeModal("Origen asignado", "Se asignó la orden de compra " & Me.TxtBusqueda.pcTexto("Documento") & " como origen. ", "i", False)
@@ -238,8 +241,8 @@ Partial Class CGS_frmAsignarOrdenAdelanto
     End Sub
 
     Private Sub TxtBusqueda_mResultadoBusquedaValido(sender As txtNormal, lcNombreCampo As String, lnIndice As Integer) Handles TxtBusqueda.mResultadoBusquedaValido
-        'Coloca comentario
 
+        'COLOCAR COMENTARIO, PROVEEDOR Y CALCULAR 70 % DEL MONTO BRUTO DE LA ORDEN DE COMPRA
         Me.cmdAceptar.Enabled = True
 
         Dim lcDocumento As String = goServicios.mObtenerCampoFormatoSQL(Me.TxtBusqueda.pcTexto("Documento"))
@@ -250,14 +253,17 @@ Partial Class CGS_frmAsignarOrdenAdelanto
 
         Me.TxtComentario.Text = CStr(loTConsulta.Rows(0).Item("Comentario")).Trim()
 
+        'SE VERIFICA QUE EL PROVEEDOR DE LA ORDEN DE COMPRA COINCIDA CON EL DEL PAGO
         If Me.Proveedor <> CStr(loTConsulta.Rows(0).Item("Cod_Pro")).Trim() Then
             Me.mMostrarMensajeModal("Operación no permitida", "El proveedor de la orden de compra es distinto al del adelanto.", "a")
             Me.cmdAceptar.Enabled = False
         End If
 
+        'TRAER VALOR DE LA OPCION "VALADLODC" QUE VERIFICA SI SE DEBE VALIDAR QUE EL ADELANTO SEA MAYOR AL MONTO BRUTO DE LA ORDEN
+        'SE PERMITE HASTA EL 70 % DEL MONTO BRUTO
         Dim llValidar As Boolean = CBool(goOpciones.mObtener("VALADLODC", ""))
 
-            If llValidar Then
+        If llValidar Then
             If Me.Monto > CDec(loTConsulta.Rows(0).Item("Monto_Orden")) Then
                 Me.mMostrarMensajeModal("Operación no permitida", "El monto del adelanto es mayor al 70 % de la orden de compra.", "a")
                 Me.cmdAceptar.Enabled = False

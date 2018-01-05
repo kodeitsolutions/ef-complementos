@@ -93,7 +93,8 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Dim loSentencias As New StringBuilder()
         Dim loTransacccion As New ArrayList()
 
-        'Colocar marca de confirmación según usuario 
+        'COLOCAR MARCA DE CONFIRMACIÓN SEGÚN USUARIO
+        'CADA USUARIO TIENE ASIGANADO UN CAMPO LOGICO EN LA TABLA ordenes_compras QUE INDICA QUE LA ORDEN DE COMPRA FUE CONFIRMADA POR ÉL
         If (lcUsuario = "mgentili") Then
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Logico1 = 1, Fecha1 = " & ldFecha & " WHERE Documento = " & lcNumero)
         ElseIf (lcUsuario = "ssimanca") Then
@@ -120,7 +121,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
         loSentencias.Length = 0
 
-        'Verificar cantidad de confirmaciones que lleva el documento
+        'VERIFICAR CANTIDAD DE CONFIRMACIONES QUE LLEVA EL DOCUMENTO
         loSentencias.AppendLine("SELECT logico1 AS mgentili, logico2 AS ssimanca, logico3 AS lcarrizal, logico4 AS yreina,logico5 AS kodeitsu")
         loSentencias.AppendLine("FROM Ordenes_Compras")
         loSentencias.AppendLine("WHERE Documento = " & lcNumero)
@@ -146,13 +147,13 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
         loSentencias.Length = 0
 
-        If lnCount = 1 Then 'Si el documento ha sido confirmado una sola vez se notifica su confirmación exitosa
+        If lnCount = 1 Then 'SI EL DOCUMENTO HA SIDO CONFIRMADO UNA SOLA VEZ SE NOTIFICA SU CONFIRMACIÓN EXITOSA
             Me.mMostrarMensajeModal("Operación Completada", "El Documento fue confirmado satisfactoriamente. ", "i")
-        ElseIf lnCount = 2 Then 'Si el documento se confirmó dos veces
+        ElseIf lnCount = 2 Then 'SI EL DOCUMENTO SE CONFIRMÓ DOS VECES
             Dim lcConsulta As New StringBuilder()
             Dim loRenglonesDatos As New goDatos()
 
-            'Traer renglones para verificar si el documento tiene asociado requision interna
+            'TRAER RENGLONES DE LA ORDEN DE COMPRA PARA VERIFICAR SI EL DOCUMENTO TIENE ASOCIADO REQUISICIÓN INTERNA
             lcConsulta.AppendLine("SELECT   Renglones_OCompras.Renglon,")
             lcConsulta.AppendLine("         Renglones_OCompras.Cod_Art,")
             lcConsulta.AppendLine("         Renglones_OCompras.Cod_Alm,")
@@ -180,7 +181,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 Dim lcRenOri As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Ren_Ori")).Trim())
 
                 If CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Doc_Ori")).Trim() <> "" Then
-                    'Rebajar cantidades pendientes de requisicion y cambiar estatus
+                    'REBAJAR CANTIDADES PENDIENTES DE REQUISICIÓN Y CAMBIAR SU ESTATUS
                     loSentencias.AppendLine("UPDATE Renglones_Requisiciones SET Can_Pen1 = Can_Pen1 - " & ldCantidad)
                     loSentencias.AppendLine("WHERE Documento = " & lcDocOri & " AND Renglon = " & lcRenOri)
                     loSentencias.AppendLine("")
@@ -196,7 +197,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 End If
 
                 If CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Tipo")).Trim() <> "Servicio" Then
-                    'Rebajar cantidades por llegar en articulo y almacen
+                    'REBAJAR CANTIDADES POR LLEGAR EN ARTÍCULO Y ALMACÉN
                     Dim lcCodArt As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Cod_Art")).Trim())
                     Dim lcCodAlm As String = goServicios.mObtenerCampoFormatoSQL(CStr(loTablaRenglones.Tables(0).Rows(lnNumeroFila).Item("Cod_Alm")).Trim())
 
@@ -218,7 +219,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
                 End If
             Next lnNumeroFila
 
-            'Cambiar estatus de la orden de compra a Confirmado
+            'CAMBIAR ESTATUS DE LA ORDEN DE COMPRA A "CONFIRMADO"
             loSentencias.AppendLine("UPDATE Ordenes_Compras SET Status = 'Confirmado' WHERE Documento = " & lcNumero)
             loSentencias.AppendLine("")
             loSentencias.AppendLine("")
@@ -284,7 +285,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
 
 
         Try
-            'Inserción de auditoria
+            'INSERCIÓN DE AUDITORÍA
             loDatos.mEjecutarComando(lcInsercionAuditoria)
 
         Catch loExcepcion As Exception
@@ -341,7 +342,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         Dim lcNumero As String = Strings.Trim(Me.txtDocumento.pcTexto("Documento"))
         Dim lcUsuario As String = goUsuario.pcCodigo
 
-        ' Verifica que el usuario tenga permitido confirmar.
+        'VERIFICA QUE EL USUARIO TENGA PERMITIDO CONFIRMAR
         If (lcUsuario <> "mgentili" And lcUsuario <> "ssimanca" And lcUsuario <> "lcarrizal" And lcUsuario <> "yreina" And lcUsuario <> "kodeitsu") Then
 
             Me.mMostrarMensajeModal("Operación no Completada", "Usted no tiene permisos para confirmar la orden de compra. ", "a")

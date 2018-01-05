@@ -86,13 +86,12 @@ Partial Class CGS_frmAsignarSolicitanteRequisicion
     Handles cmdAceptar.Click
 
         Dim lcNumero As String = goServicios.mObtenerCampoFormatoSQL(Strings.Trim(Me.txtDocumento.pcTexto("Documento")))
-        '       Dim lcUsuario As String = goUsuario.pcCodigo
-        '       Dim ldFecha As String = goServicios.mObtenerCampoFormatoSQL(Date.Now())
 
         Dim loDatos As New goDatos()
         Dim loSentencias As New StringBuilder()
         Dim loTransacccion As New ArrayList()
 
+        'LOS DATOS DE LOS SOLICITANTES SE GUARDAN EN LOS CAMPOS caracterX DE LA TABLA REQUISICIONES
         loSentencias.AppendLine("UPDATE Requisiciones")
         loSentencias.AppendLine("SET Caracter1 = " & goServicios.mObtenerCampoFormatoSQL(Me.txtSolicitante1.Text) & ",")
         loSentencias.AppendLine("Caracter2 = " & goServicios.mObtenerCampoFormatoSQL(Me.txtSolicitante2.Text) & ",")
@@ -151,6 +150,7 @@ Partial Class CGS_frmAsignarSolicitanteRequisicion
         Dim loDatos As New goDatos
         Dim loConsulta As New StringBuilder()
 
+        'SI YA TIENE SOLICITANTES ASOCIADOS LOS CARGA EN SUS RESPECTIVOS CAMPOS DE LA PANTALLA
         loConsulta.AppendLine("SELECT Requisiciones.Cod_Pro,")
         loConsulta.AppendLine("       Requisiciones.Comentario,")
         loConsulta.AppendLine("       Proveedores.Nom_Pro,")

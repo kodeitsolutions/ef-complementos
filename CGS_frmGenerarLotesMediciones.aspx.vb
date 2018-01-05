@@ -19,14 +19,14 @@ Partial Class CGS_frmGenerarLotesMediciones
 
 #Region "Propiedades"
 
-    Private Property plSoloLectura As Boolean 
-        Get 
-            Return CBool(Me.ViewState("plSoloLectura"))
-        End Get
-        Set(value As Boolean)
-            Me.ViewState("plSoloLectura") = value
-        End Set
-    End Property
+    'Private Property plSoloLectura As Boolean 
+    '    Get 
+    '        Return CBool(Me.ViewState("plSoloLectura"))
+    '    End Get
+    '    Set(value As Boolean)
+    '        Me.ViewState("plSoloLectura") = value
+    '    End Set
+    'End Property
 
     Private Property pnDecimalesParaCantidad As Integer
         Get
@@ -155,6 +155,7 @@ Partial Class CGS_frmGenerarLotesMediciones
 
             Dim loConsulta As New StringBuilder()
 
+            'TRAER INFORMACIÓN DEL DOCUMENTO DE ACUERDO A LA TABLA DESDE DONDE SE EJECUTA EL COMPLEMENTO
             Select Case Me.pcTablaDocumento
                 Case "recepciones"
                     loConsulta.AppendLine("SELECT   Renglones_Recepciones.Cod_Art   AS Cod_Art,")
@@ -218,20 +219,18 @@ Partial Class CGS_frmGenerarLotesMediciones
         End If
 
         Me.grdLotesMediciones.mHabilitarBotonera(llEditable)
-        'Me.grdLotesMediciones.plPermitirAgregarRenglon = False
-        'Me.grdLotesMediciones.plPermitirEliminarRenglon = False
         Me.grdLotesMediciones.mAlmacenarRenglones()
 
     End Sub
 
     Protected Sub grdLotesMediciones_mClicBotonAdicional(lnBoton As vis3Controles.grdListaRenglones.enuBotonesAdicionales) Handles grdLotesMediciones.mClicBotonAdicional
 
+        'AGREGAR UNA FILA AL GRID
         Select Case lnBoton
             Case vis3Controles.grdListaRenglones.enuBotonesAdicionales.lnPrimerBoton
 
 
                 Dim loTabla As DataTable = Me.grdLotesMediciones.poOrigenDeDatos
-                'Dim loPLantilla As DataRow = Me.poArticuloPlantilla.Rows(0)
 
                 For i As Integer = 1 To KN_CANTIDAD_RENGLONES_LOTE
                     Dim loRenglon As DataRow = loTabla.NewRow()
@@ -333,24 +332,11 @@ Partial Class CGS_frmGenerarLotesMediciones
             Dim lnPorcentaje As Decimal = CDec(loRenglon("prc_des"))
             Dim lnLongitud As Decimal = CDec(loRenglon("med_lng"))
 
-            'Si no indica el artículo: el renglón no se guarda
+            'SI NO INDICA EL ARTÍCULO EL RENGLÓN NO SE GUARDA
             If (lcLote = "") Then
                 laVacios.Add(lnRenglon)
                 Continue For
             End If
-
-            'If (lcLote <> "" And lnCantidad = 0D) Then
-            '    If loMensaje.Length = 0 Then
-            '        loMensaje.Append("Los siguientes datos no son válidos: <br/>")
-            '    End If
-            '    loMensaje.Append("* Renglón ")
-            '    loMensaje.Append(CInt(loRenglon("Renglon")))
-            '    loMensaje.Append(": ")
-
-            '    loMensaje.Append("El lote/colada ")
-            '    loMensaje.Append(CStr(loRenglon("cod_lot")).Trim())
-            '    loMensaje.Append(" no tiene especificada una cantidad. ")
-            'End If
 
             lnTotalCantidad += lnCantidad
 
@@ -372,8 +358,7 @@ Partial Class CGS_frmGenerarLotesMediciones
             Return False
         End If
 
-        'Elimina los renglones Vacíos (sin nombre de artículo)
-        'Desde el último al primero
+        'ELIMINA LOS RENGLONES VACÍOS (SIN NOMBRE DE ARTÍCULOS) DESDE EL ÚLTIMO AL PRIMERO
         laVacios.Sort()
         laVacios.Reverse()
 
@@ -419,6 +404,7 @@ Partial Class CGS_frmGenerarLotesMediciones
         loConsulta.AppendLine("DECLARE @lcEquipo CHAR(30) = " & goServicios.mObtenerCampoFormatoSQL(goAuditoria.pcNombreEquipo) & ";")
         loConsulta.AppendLine("DECLARE @lcSucursal CHAR(10) = " & goServicios.mObtenerCampoFormatoSQL(goSucursal.pcCodigo) & ";")
         loConsulta.AppendLine("")
+        '--TABLA TEMPORAL PARA TENER LA INFORMACIÓN DE LOS LOTES Y MEDICIONES QUE SE VAN A GUARDAR
         loConsulta.AppendLine("CREATE TABLE #tmpLoteMediciones (Renglon INT,")
         loConsulta.AppendLine("								 Contador VARCHAR(10),")
         loConsulta.AppendLine("								 Lote VARCHAR(30),")
@@ -432,20 +418,21 @@ Partial Class CGS_frmGenerarLotesMediciones
 
             Dim lnRenglon As Integer = CInt(loRenglon("Renglon"))
 
+            '--INSERTAR LOS DATOS DEL GRID
             loConsulta.Append("INSERT INTO #tmpLoteMediciones VALUES (")
-            loConsulta.Append(lnRenglon.ToString()) 'Renglon
+            loConsulta.Append(lnRenglon.ToString()) 'RENGLÓN
             loConsulta.Append(", ")
-            loConsulta.Append("0")                  'Contador
+            loConsulta.Append("0")                  'CONTADOR
             loConsulta.Append(", ")
-            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("cod_lot")))) 'lote
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("cod_lot")))) 'LOTE
             loConsulta.Append(",")
-            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_lot")))) 'cantidad lote
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_lot")))) 'CANTIDAD LOTE
             loConsulta.Append(",")
-            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_pza")))) 'piezas
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_pza")))) 'PIEZAS
             loConsulta.Append(",")
-            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("prc_des")))) 'porcentaje desperdicio
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("prc_des")))) 'PORCENTAJE DE DESPERDICIO
             loConsulta.Append(",")
-            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("med_lng")))) 'longitud
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("med_lng")))) 'LONGITUD
             loConsulta.AppendLine(");")
 
         Next loRenglon
@@ -463,6 +450,7 @@ Partial Class CGS_frmGenerarLotesMediciones
         loConsulta.AppendLine("	SET @lnPorc_Desp = (SELECT Porc_Desperdicio FROM #tmpLoteMediciones WHERE Renglon = @lnRenglon)")
         loConsulta.AppendLine("	SET @lnLongitud = (SELECT Longitud FROM #tmpLoteMediciones WHERE Renglon = @lnRenglon)")
         loConsulta.AppendLine("")
+        '--SI NO EXISTE EL LOTE SE DEBE HACER UN INSERT PARA CREARLO
         loConsulta.AppendLine("	IF NOT EXISTS (SELECT 1 FROM Lotes WHERE Cod_Lot = @lcLote AND Cod_Art = @lcCod_Art)")
         loConsulta.AppendLine("	BEGIN ")
         loConsulta.AppendLine("		INSERT INTO Lotes (Cod_Art, Cod_Lot, Exi_Act1) VALUES (@lcCod_Art, @lcLote,@lnCan_Lote)")
@@ -483,6 +471,7 @@ Partial Class CGS_frmGenerarLotesMediciones
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	IF @lnCan_Piezas <> 0 OR @lnPorc_Desp <> 0 OR @lnLongitud <> 0")
         loConsulta.AppendLine("	BEGIN")
+        '--OBTENER PRÓXIMO CONTADOR PARA INSERTAR LA MEDICIÓN
         loConsulta.AppendLine("		EXECUTE @RC = [dbo].[mObtenerProximoContador] ")
         loConsulta.AppendLine("		'Mediciones'")
         loConsulta.AppendLine("		,@lcSucursal")
@@ -498,6 +487,7 @@ Partial Class CGS_frmGenerarLotesMediciones
         loConsulta.AppendLine("				@lcCod_Art, @lcCod_Alm," & lcDocumento & ", 'Prueba',@lcLote, @lcTabla, @lcSucursal, (SELECT TOP 1 CAST(Renglon AS CHAR) FROM #tmpLoteMediciones WHERE Lote = @lcLote ORDER BY Renglon ASC),")
         loConsulta.AppendLine("				'Media', @lcUsuario, @lcUsuario, @lcEquipo, @lcEquipo)")
         loConsulta.AppendLine("")
+        '--INSERCIÓN DE LOS RENGLONES DE LAS MEDICIONES SEGÚN LA TABLA DESDE DONDE SE EJECUTÓ EL COMPLEMENTO
         loConsulta.AppendLine("		IF RTRIM(@lcTabla) = 'Recepciones'")
         loConsulta.AppendLine("		BEGIN")
         loConsulta.AppendLine("			INSERT INTO Renglones_Mediciones (Documento, Renglon, Cod_Var, Nom_Var, Cod_Uni, Val_Min_Esp, Val_Max_Esp, Res_Num, Evaluacion)")
