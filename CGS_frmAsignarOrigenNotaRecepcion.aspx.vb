@@ -383,7 +383,6 @@ Partial Class CGS_frmAsignarOrigenNotaRecepcion
         lcConsulta.AppendLine("FROM Renglones_OCompras")
         lcConsulta.AppendLine(" JOIN Articulos ON Articulos.Cod_Art = Renglones_OCompras.Cod_Art")
         lcConsulta.AppendLine("WHERE Documento = " & lcDocumento)
-        lcConsulta.AppendLine("GROUP BY Renglones_OCompras.Renglon, Renglones_OCompras.Cod_Art, Articulos.Nom_Art,  Renglones_OCompras.Can_Art1, Total.numRows, Renglones_OCompras.Caracter1")
         lcConsulta.AppendLine("")
         lcConsulta.AppendLine("")
         lcConsulta.AppendLine("")
