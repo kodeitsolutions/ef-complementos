@@ -150,6 +150,64 @@ Partial Class CGS_frmConfirmarOrdenCompra
         If lnCount = 1 Then 'SI EL DOCUMENTO HA SIDO CONFIRMADO UNA SOLA VEZ SE NOTIFICA SU CONFIRMACIÓN EXITOSA
             Me.mMostrarMensajeModal("Operación Completada", "El Documento fue confirmado satisfactoriamente. ", "i")
         ElseIf lnCount = 2 Then 'SI EL DOCUMENTO SE CONFIRMÓ DOS VECES
+
+            'EVENTO "Antes de Confirmar"
+            '-------------------------------------------------------------------------------------------
+            ' Dispara los eventos "Antes de Confirmar" y "Despues de Confirmar".
+            '-------------------------------------------------------------------------------------------
+            Dim llEventosActivos As Boolean = CBool(cusAplicacion.goOpciones.mObtener("ACTEVE", "L")) 
+            Dim laVista As DataRow = Nothing 
+            Dim laRenglones() As DataTable = Nothing '= New DataTable(){ loTablaDatos }
+            
+            If llEventosActivos Then 
+
+                Dim loConsulta As New StringBuilder()
+                'Agregar todos los campos necesarios del encabezado y los renglones
+                loConsulta.AppendLine("")
+                loConsulta.AppendLine("SELECT  Documento, Control, Fec_Ini, Fec_Fin, Mon_Net,Usu_Cre")
+                loConsulta.AppendLine("FROM    Ordenes_Compras")
+                loConsulta.AppendLine("WHERE   Documento = " & lcNumero)
+                loConsulta.AppendLine("")
+                loConsulta.AppendLine("SELECT  Documento, Renglon, Cod_Art, Can_Art1, Precio1, Mon_Net")
+                loConsulta.AppendLine("FROM    Renglones_oCompras")
+                loConsulta.AppendLine("WHERE   Documento = " & lcNumero)
+                loConsulta.AppendLine("ORDER BY Renglon ASC")
+                loConsulta.AppendLine("")
+                loConsulta.AppendLine("")
+
+                Dim loCompra As DataSet
+            
+                loCompra = (New goDatos()).mObtenerTodosSinEsquema(loConsulta.ToString(), "Ordenes_Compras")
+
+
+                'El encabezado se pasa como un soloDataRow
+                laVista = loCompra.Tables(0).Rows(0)
+                'Los renglones se toman directamente como un array de DataTable
+                laRenglones = New DataTable(){ loCompra.Tables(1) }
+
+                '-------------------------------------------------------------------------------------------
+                ' Ejecutar el gancho "ANTES_CONFIRMAR"
+                '-------------------------------------------------------------------------------------------
+                'Gancho Básico (para eventos de formularios registrados)
+                'Dim loResultado = goEvento.mGanchoGenerico("OrdenesCompra", "ANTES_CONFIRMAR", laVista, laRenglones, False)
+                'Gancho Genérico (para eventos de pantalla personalizada)
+                Dim loResultado = goEvento.mGancho("OrdenesCompra", "ANTES_CONFIRMAR", laVista, laRenglones, New goEntornoFramework(True), False)
+
+                'Si la operación se cancela (e.g. si el evento responde "no continuar")
+                'No se guarda el registro actual (el "Aceptar" no se ejecuta)
+                If Not loResultado.plContinuarEjecucion Then
+
+                    Me.mMostrarMensajeModal(loResultado.pcTituloMensaje, loResultado.pcContenidoMensaje, "a")
+
+                    Return 
+                End If
+
+            End If
+
+            'FIN EVENTO "Antes de Confirmar"
+
+
+
             Dim lcConsulta As New StringBuilder()
             Dim loRenglonesDatos As New goDatos()
 
@@ -237,6 +295,33 @@ Partial Class CGS_frmConfirmarOrdenCompra
                     "No fue posible completar la confirmación del documento. <br/>Información Adicional:" & _
                     loExcepcion.Message, "e")
             End Try
+
+
+            'INICIO EVENTO "Después de Confirmar"
+            If llEventosActivos Then
+
+                '-------------------------------------------------------------------------------------------
+                ' Ejecutar el gancho "DESPUES_CONFIRMAR"
+                '-------------------------------------------------------------------------------------------
+                'Gancho Básico (para eventos de formularios registrados)
+                'Dim loResultado = goEvento.mGanchoGenerico("OrdenesCompra", "DESPUES_CONFIRMAR", laVista, laRenglones, False)
+                'Gancho Genérico (para eventos de pantalla personalizada)
+                Dim loResultado = goEvento.mGancho("OrdenesCompra", "DESPUES_CONFIRMAR", laVista, laRenglones, New goEntornoFramework(True), False)
+            
+                'Si la operación se cancela (e.g. si el evento responde "no continuar")
+                'El registro ya se ha guardado (no se puede evitar), pero debe mostrarse el mensaje del evento
+                If Not loResultado.plContinuarEjecucion Then
+
+                    Me.mMostrarMensajeModal(loResultado.pcTituloMensaje, loResultado.pcContenidoMensaje, "a")
+
+                    Return 
+
+                End If
+
+            End If
+            'FIN EVENTO "Despues de Confirmar"
+
+
         End If
 
         'loSentencias.Length = 0
@@ -295,7 +380,10 @@ Partial Class CGS_frmConfirmarOrdenCompra
         End Try
 
         If lnCount = 2 Then
-            Dim lcDoc As String = DirectCast(Me.paParametros("laIndices"), Generic.Dictionary(Of String, Object))("Documento")
+
+            'El número de documento se toma del control en pantalla (por si acaso el usuario lo cambió manualmente).
+            'Dim lcDoc As String = DirectCast(Me.paParametros("laIndices"), Generic.Dictionary(Of String, Object))("Documento")
+            Dim lcDoc As String = Strings.Trim(Me.txtDocumento.pcTexto("Documento"))
 
             Dim lcTablaEncabezado As String = "[Ordenes_Compras]"
             Dim lcTablaRenglones As String = "[Renglones_OCompras]"
@@ -451,4 +539,6 @@ End Class
 ' Fin del codigo																			'
 '-------------------------------------------------------------------------------------------'
 ' RJG: 22/09/17: Codigo Inicial																'
+'-------------------------------------------------------------------------------------------'
+' RJG: 17/01/18: Agregué los ganchos "ANTES_CONFIRMAR" y "DESPUES_CONFIRMAR".               '
 '-------------------------------------------------------------------------------------------'
