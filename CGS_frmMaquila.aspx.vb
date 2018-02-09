@@ -36,6 +36,7 @@ Partial Class CGS_frmMaquila
 
         Me.pnDecimalesParaCantidad = goOpciones.pnDecimalesParaCantidad
 
+        'CREACIÓN DE LAS TABLAS
         Me.grdConsumido.mRegistrarColumna("cod_art", "Artículo", "", True, True, "String", False, 100)
         Me.grdConsumido.mRegistrarColumna("cod_lot", "Lote", "", True, True, "String", False, 100)
         Me.grdConsumido.mRegistrarColumna("can_art", "Cantidad", 0D, True, True, "Decimal", False, 100)
@@ -52,6 +53,8 @@ Partial Class CGS_frmMaquila
         Me.grdObtenido.mLimitarCampoTexto("cod_lot", True, 50)
         Me.grdObtenido.pnDecimalesColumna("can_art") = Me.pnDecimalesParaCantidad
 
+
+        'BÚSQUEDA DE ARTÍCULOS EN LOS RENGLONES DE LAS TABLAS
         Me.grdConsumido.mRegistrarBusquedaAsistida("cod_art", _
                                                     "articulos", _
                                                     "cod_art", _
@@ -61,6 +64,16 @@ Partial Class CGS_frmMaquila
                                                     "", "status = \'A\'", False)
 
         Me.grdConsumido.pcUrlFormularioBusqueda = "../../Framework/Formularios/frmFormularioBusqueda.aspx"
+
+        Me.grdObtenido.mRegistrarBusquedaAsistida("cod_art", _
+                                                    "articulos", _
+                                                    "cod_art", _
+                                                    "cod_art,nom_art,status", _
+                                                    ".,Código,Nombre,E", _
+                                                    "cod_art,nom_art", _
+                                                    "", "status = \'A\'", False)
+
+        Me.grdObtenido.pcUrlFormularioBusqueda = "../../Framework/Formularios/frmFormularioBusqueda.aspx"
 
         'Me.grdConsumido.mRegistrarBusquedaAsistida("cod_lot", _
         '                                            "renglones_lotes", _
@@ -73,17 +86,10 @@ Partial Class CGS_frmMaquila
         'Me.grdConsumido.pcUrlFormularioBusqueda = "../../Framework/Formularios/frmFormularioBusqueda.aspx"
 
 
-        Me.grdObtenido.mRegistrarBusquedaAsistida("cod_art", _
-                                                    "articulos", _
-                                                    "cod_art", _
-                                                    "cod_art,nom_art,status", _
-                                                    ".,Código,Nombre,E", _
-                                                    "cod_art,nom_art", _
-                                                    "", "status = \'A\'", False)
+        Me.txtTotalConsumido.pnNumeroDecimales = Me.pnDecimalesParaCantidad
+        Me.txtTotalObtenido.pnNumeroDecimales = Me.pnDecimalesParaCantidad
 
-        Me.grdObtenido.pcUrlFormularioBusqueda = "../../Framework/Formularios/frmFormularioBusqueda.aspx"
-
-
+        'CARGAR COMBOBOXES DE ALMACENES
         If Not Me.IsPostBack() Then
 
             Me.mCargarTablaVacia()
@@ -104,17 +110,12 @@ Partial Class CGS_frmMaquila
 
             Me.cboAlmacenConsumo.mLlenarLista(loListaAlmacenes)
             Me.cboAlmacenTrabajo.mLlenarLista(loListaAlmacenes)
-            'Me.txtTotal.pbValor = 0D
-            'Me.txtTotal.pnNumeroDecimales = Me.pnDecimalesParaCantidad
-
         Else
             Me.grdConsumido.DataBind()
             Me.grdObtenido.DataBind()
         End If
 
         Me.grdConsumido.mHabilitarBotonera(True)
-        'Me.grdConsumido.plPermitirAgregarRenglon = False
-        'Me.grdConsumido.plPermitirEliminarRenglon = False
         Me.grdConsumido.mAlmacenarRenglones()
 
         Me.grdObtenido.mHabilitarBotonera(True)
@@ -139,7 +140,7 @@ Partial Class CGS_frmMaquila
 #Region "Metodos"
 
     ''' <summary>
-    ''' Carga la tabla inicial en blanco para el grid de artículos.
+    ''' Carga la tabla inicial en blanco para el grid de material consumido y obtenido.
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub mCargarTablaVacia()
@@ -187,7 +188,7 @@ Partial Class CGS_frmMaquila
     End Sub
 
     ''' <summary>
-    ''' Valida los datos de los renglones y devuelve true si sin válidos, y false en caso contrario.
+    ''' Valida los datos de los renglones y devuelve true si son válidos, y false en caso contrario.
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -196,8 +197,9 @@ Partial Class CGS_frmMaquila
         Dim lcAlmConsumo As String = Me.cboAlmacenConsumo.SelectedValue.Trim()
         Dim lcAlmTrabajo As String = Me.cboAlmacenTrabajo.SelectedValue.Trim()
 
+        'EL ALMACÉN DE CONSUMO DEBE SER DISTINTO DEL ALMACÉN DE OBTENIDO
         If lcAlmConsumo = lcAlmTrabajo Then
-            Me.mMostrarMensajeModal("Datos no Válidos", "El almacén del artículo obtenido no puede ser igual al del material trabajado.", "a", False)
+            Me.mMostrarMensajeModal("Datos no Válidos", "El almacén del artículo consumido no puede ser igual al del material trabajado.", "a", False)
             Return False
         End If
 
@@ -227,6 +229,7 @@ Partial Class CGS_frmMaquila
 
         Dim loConsultaConsumido As New StringBuilder()
 
+        'VALIDACIÓN DE DATOS EN GRID CONSUMIDO
         loConsultaConsumido.AppendLine("")
         loConsultaConsumido.AppendLine("CREATE TABLE #tmpValidar(   Cod_Art CHAR(8) COLLATE DATABASE_DEFAULT,")
         loConsultaConsumido.AppendLine("                            Usa_Lot	BIT DEFAULT(0),")
@@ -258,6 +261,8 @@ Partial Class CGS_frmMaquila
         loConsultaConsumido.AppendLine("	SET @lnRenglon = @lnRenglon + 1")
         loConsultaConsumido.AppendLine("END")
         loConsultaConsumido.AppendLine("")
+        'SI EL ARTÍCULO USA LOTE, SE VERIFICA QUE EL LOTE EXISTA Y TENGA DISPONIBLE LA CANTIDAD ESPECIFICADA EN EL ALMACÉN INDICADO
+        'TAMBIÉN SE VERIFICA QUE LA CANTIDAD SEA MAYOR A CERO(0)
         loConsultaConsumido.AppendLine("UPDATE #tmpValidar")
         loConsultaConsumido.AppendLine("SET Valido = 1")
         loConsultaConsumido.AppendLine("FROM Renglones_Lotes  ")
@@ -268,6 +273,8 @@ Partial Class CGS_frmMaquila
         loConsultaConsumido.AppendLine("	AND #tmpValidar.Usa_Lot = 1 ")
         loConsultaConsumido.AppendLine("    AND #tmpValidar.Can_Art > 0")
         loConsultaConsumido.AppendLine("")
+        'SI EL ARTÍCULO NO USA LOTE, SE VERIFICA QUE EL ARTÍCULO EXISTA Y TENGA DISPONIBLE LA CANTIDAD ESPECIFICADA EN EL ALMACÉN INDICADO
+        'TAMBIÉN SE VERIFICA QUE LA CANTIDAD SEA MAYOR A CERO(0) 
         loConsultaConsumido.AppendLine("UPDATE #tmpValidar")
         loConsultaConsumido.AppendLine("SET Valido = 1")
         loConsultaConsumido.AppendLine("FROM Renglones_Almacenes  ")
@@ -353,17 +360,16 @@ Partial Class CGS_frmMaquila
             Return False
         End If
 
+        'ELIMINAR FILAS VACÍAS DEL GRID CONSUMIDO
         laConsumidoVacios.Sort()
         laConsumidoVacios.Reverse()
 
         For Each lnValor As Integer In laConsumidoVacios
             Me.grdConsumido.mEliminarRenglon(lnValor - 1, False, False)
         Next
-        'If loMensaje.Length > 0 Then
-        '    Me.mMostrarMensajeModal("Datos no Válidos", loMensaje.ToString(), "a", True)
-        '    Return False
-        'End If
+        'FIN VALIDACIÓN GRID CONSUMIDO
 
+        'VALIDACIÓN GRID OBTENIDO
         Dim laObtenidoVacios As New Generic.List(Of Integer)
 
         laArtLotes.Clear()
@@ -430,7 +436,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("		OR (#tmpValidar.Usa_Lot = 0 AND #tmpValidar.Lote = '')) ")
         loConsulta.AppendLine(" AND #tmpValidar.Can_Art > 0")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("SELECT Cod_Art, Usa_Lot, Lote, Can_Art, Renglon, Valido, Repetido")
+        loConsulta.AppendLine("SELECT Cod_Art, Usa_Lot, Lote, Can_Art, Renglon, Valido")
         loConsulta.AppendLine("FROM #tmpValidar")
         loConsulta.AppendLine("WHERE Valido = 0")
         loConsulta.AppendLine("ORDER BY Renglon")
@@ -499,11 +505,22 @@ Partial Class CGS_frmMaquila
             Return False
         End If
 
+        'NO PERMITE QUE LA CANTIDAD OBTENIDA SEA MAYOR A LA CONSUMIDA
         'If Me.grdConsumido.mObtenerSumaColumna("can_art") < Me.grdObtenido.mObtenerSumaColumna("can_art") Then
         '    Me.mMostrarMensajeModal("Datos no Válidos", "La cantidad total Obtenida no puede ser mayor que la cantidad Consumida.", "a", True)
         '    Return False
         'End If
 
+        'ELIMINAR FILAS VACÍAS DE GRID OBTENIDO
+        laObtenidoVacios.Sort()
+        laObtenidoVacios.Reverse()
+
+        For Each lnValor As Integer In laObtenidoVacios
+            Me.grdObtenido.mEliminarRenglon(lnValor - 1, False, False)
+        Next
+        'FIN DE VALIDACIÓN GRID OBTENIDO
+
+        'MUESTRA MENSAJE DE ERRORES
         If loMensaje.Length > 0 Then
             Me.mMostrarMensajeModal("Datos no Válidos", loMensaje.ToString(), "a", True)
             Return False
@@ -584,16 +601,14 @@ Partial Class CGS_frmMaquila
         Next loRenglon
 
         loConsulta.AppendLine("")
-
-        loConsulta.AppendLine("")
-        loConsulta.AppendLine("DECLARE @lcMensaje AS VARCHAR(MAX) = ''")
-        loConsulta.AppendLine("")
         loConsulta.AppendLine("DECLARE @lcArticulo AS VARCHAR(8) = ''")
         loConsulta.AppendLine("DECLARE @lcLote AS VARCHAR(30) = ''")
         loConsulta.AppendLine("DECLARE @lnCantidad AS DECIMAL(28," & Me.pnDecimalesParaCantidad & ") = 0")
         loConsulta.AppendLine("DECLARE @lcUnidad AS VARCHAR(5) = ''")
         loConsulta.AppendLine("DECLARE @lcNom_Art AS VARCHAR(MAX) = ''")
+        loConsulta.AppendLine("DECLARE @lnCos_Ult AS DECIMAL(28," & Me.pnDecimalesParaCantidad & ") = 0")
         loConsulta.AppendLine("")
+        'DATOS DE AUDITORÍAS
         loConsulta.AppendLine("DECLARE @lcAud_Usuario      NVARCHAR(10) = @lcUsuario")
         loConsulta.AppendLine("DECLARE @lcAud_Tipo         NVARCHAR(15) = 'Datos'")
         loConsulta.AppendLine("DECLARE @lcAud_Tabla        NVARCHAR(30) = 'Ajustes'")
@@ -615,6 +630,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("DECLARE @lnFilas AS INT   = (SELECT MAX(Renglon) FROM #tmpConsumido)")
         loConsulta.AppendLine("DECLARE @lnRenglon AS INT = 1")
         loConsulta.AppendLine("")
+        'CONTADORES PARA LOS AJUSTES
         loConsulta.AppendLine("EXECUTE @RC = [dbo].[mObtenerProximoContador] ")
         loConsulta.AppendLine("	'AJUINV'")
         loConsulta.AppendLine("	,@lcSucursal")
@@ -629,9 +645,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("")
         loConsulta.AppendLine("SET @lcAud_Documento = @lcContadorConsumido")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("SET @lcMensaje = 'Se generaron los siguientes ajustes de inventario: ' + CHAR(13) + '- CONSUMO: ' + @lcContadorConsumido + '.'")
-        loConsulta.AppendLine("				+ CHAR(13) + '- TRABAJADO: ' + @lcContadorObtenido + '.'")
-        loConsulta.AppendLine("")
+        'AJUSTE PARA MATERIAL CONSUMIDO
         loConsulta.AppendLine("INSERT INTO Ajustes (Documento,status,automatico,cod_mon,tasa,caracter1,tipo,comentario,cod_suc,fec_ini,fec_fin)")
         loConsulta.AppendLine("VALUES(@lcContadorConsumido,'Confirmado',0,'VEB',1.00,@lcContadorObtenido,'Existencia',")
         loConsulta.AppendLine("	" & goServicios.mObtenerCampoFormatoSQL(Me.TxtComentCons.Text) & ",@lcSucursal,@ldFecha,@ldFecha)")
@@ -645,18 +659,21 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("	FROM #tmpConsumido")
         loConsulta.AppendLine("	WHERE Renglon = @lnRenglon")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("	SET @lcNom_Art = (SELECT Nom_Art FROM Articulos WHERE Cod_Art = @lcArticulo)")
-        loConsulta.AppendLine("	SET @lcUnidad = (SELECT Cod_Uni1 FROM Articulos WHERE Cod_Art = @lcArticulo)	")
-        loConsulta.AppendLine("	")
+        loConsulta.AppendLine("	SET @lcNom_Art = COALESCE((SELECT Nom_Art FROM Articulos WHERE Cod_Art = @lcArticulo),'')")
+        loConsulta.AppendLine("	SET @lcUnidad = COALESCE((SELECT Cod_Uni1 FROM Articulos WHERE Cod_Art = @lcArticulo),'')")
+        loConsulta.AppendLine("	SET @lnCos_Ult = COALESCE((SELECT Cos_Ult1 FROM Articulos WHERE Cod_Art = @lcArticulo),1)")
+        loConsulta.AppendLine("")
         loConsulta.AppendLine("	INSERT INTO renglones_ajustes (Documento,cod_art,renglon,cod_tip,tipo,cod_alm,can_art1,cos_ult1,")
         loConsulta.AppendLine("								mon_net,notas,can_uni,cod_uni,can_uni2,cod_uni2,can_art2)")
-        loConsulta.AppendLine("	VALUES(@lcContadorConsumido,@lcArticulo,@lnRenglon,'S02','Salida',@lcCodAlm_Pro,@lnCantidad,1,")
+        loConsulta.AppendLine("	VALUES(@lcContadorConsumido,@lcArticulo,@lnRenglon,'S02','Salida',@lcCodAlm_Pro,@lnCantidad,@lnCos_Ult,")
         loConsulta.AppendLine("		    @lnCantidad, @lcNom_Art,1,@lcUnidad,1,@lcUnidad,@lnCantidad)")
         loConsulta.AppendLine("")
+        'ACTUALIZAR EXISTENCIAS EN TABLAS articulos Y renglones_almacenes
         loConsulta.AppendLine("	UPDATE Articulos SET Exi_Act1 = Exi_Act1 - @lnCantidad WHERE Cod_Art = @lcArticulo")
         loConsulta.AppendLine("	UPDATE Renglones_Almacenes SET Exi_Act1 = Exi_Act1  - @lnCantidad ")
         loConsulta.AppendLine("	WHERE Cod_ALm = @lcCodAlm_Pro AND Cod_Art = @lcArticulo")
         loConsulta.AppendLine("")
+        'SI EL ARTÍCULO MANEJA LOTES, ACTUALIZAR  EXISTENCIAS EN TABLAS lotes Y renglones_lotes Y REGISTRAR MOVIMIENTO DEL LOTE EN TABLA operaciones_lotes
         loConsulta.AppendLine("	IF @lcLote <> ''")
         loConsulta.AppendLine("	BEGIN")
         loConsulta.AppendLine("		UPDATE Renglones_Lotes SET Exi_Act1 = Exi_Act1 - @lnCantidad ")
@@ -669,20 +686,22 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("			'Salida',@lnRenglon)")
         loConsulta.AppendLine("	END")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("	UPDATE Ajustes SET Can_Art1 = (SELECT SUM(Can_Art1) FROM Renglones_Ajustes WHERE Documento = @lcContadorConsumido) WHERE Documento = @lcContadorConsumido")
-        loConsulta.AppendLine("	UPDATE Ajustes SET Mon_Net = (SELECT SUM(Mon_Net) FROM Renglones_Ajustes WHERE Documento = @lcContadorConsumido) WHERE Documento = @lcContadorConsumido")
-        loConsulta.AppendLine("")
-        loConsulta.AppendLine("	IF EXISTS(SELECT Documento FROM Ajustes WHERE Documento = @lcContadorConsumido)")
-        loConsulta.AppendLine("	BEGIN")
-        loConsulta.AppendLine("	    EXECUTE [dbo].[sp_GuardarAuditoria] ")
-        loConsulta.AppendLine("            @lcAud_Usuario, @lcAud_Tipo, @lcAud_Tabla, @lcAud_Opcion, @lcAud_Accion,")
-        loConsulta.AppendLine("            @lcAud_Documento, @lcAud_Codigo, @lcAud_Clave2, @lcAud_Clave3, @lcAud_Clave4, @lcAud_Clave5,")
-        loConsulta.AppendLine("            @lcAud_Detalle, @lcAud_Equipo, @lcAud_Sucursal, @lcAud_Objeto, @lcAud_Notas, @lcAud_Empresa")
-        loConsulta.AppendLine("	END")
-        loConsulta.AppendLine("")
         loConsulta.AppendLine("	SET @lnRenglon = @lnRenglon + 1")
         loConsulta.AppendLine("END ")
         loConsulta.AppendLine("")
+        loConsulta.AppendLine("UPDATE Ajustes SET Can_Art1 = (SELECT SUM(Can_Art1) FROM Renglones_Ajustes WHERE Documento = @lcContadorConsumido) WHERE Documento = @lcContadorConsumido")
+        loConsulta.AppendLine("UPDATE Ajustes SET Mon_Net = (SELECT SUM(Mon_Net) FROM Renglones_Ajustes WHERE Documento = @lcContadorConsumido) WHERE Documento = @lcContadorConsumido")
+        loConsulta.AppendLine("")
+        'INSERTAR AUDITORÍA SI EXISTE EL DOCUMENTO
+        loConsulta.AppendLine("IF EXISTS(SELECT Documento FROM Ajustes WHERE Documento = @lcContadorConsumido)")
+        loConsulta.AppendLine("BEGIN")
+        loConsulta.AppendLine("    EXECUTE [dbo].[sp_GuardarAuditoria] ")
+        loConsulta.AppendLine("           @lcAud_Usuario, @lcAud_Tipo, @lcAud_Tabla, @lcAud_Opcion, @lcAud_Accion,")
+        loConsulta.AppendLine("           @lcAud_Documento, @lcAud_Codigo, @lcAud_Clave2, @lcAud_Clave3, @lcAud_Clave4, @lcAud_Clave5,")
+        loConsulta.AppendLine("           @lcAud_Detalle, @lcAud_Equipo, @lcAud_Sucursal, @lcAud_Objeto, @lcAud_Notas, @lcAud_Empresa")
+        loConsulta.AppendLine("END")
+        loConsulta.AppendLine("")
+        'AJUSTE PARA MATERIAL OBTENIDO
         loConsulta.AppendLine("SET @lnFilas = (SELECT COUNT(*) FROM #tmpObtenido)")
         loConsulta.AppendLine("SET @lnRenglon = 1")
         loConsulta.AppendLine("")
@@ -701,14 +720,15 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("	FROM #tmpObtenido")
         loConsulta.AppendLine("	WHERE Renglon = @lnRenglon")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("	SET @lcNom_Art = (SELECT Nom_Art FROM Articulos WHERE Cod_Art = @lcArticulo)")
-        loConsulta.AppendLine("	SET @lcUnidad = (SELECT Cod_Uni1 FROM Articulos WHERE Cod_Art = @lcArticulo)	")
+        loConsulta.AppendLine("	SET @lcNom_Art = COALESCE((SELECT Nom_Art FROM Articulos WHERE Cod_Art = @lcArticulo),'')")
+        loConsulta.AppendLine("	SET @lcUnidad = COALESCE((SELECT Cod_Uni1 FROM Articulos WHERE Cod_Art = @lcArticulo),'')")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	INSERT INTO Renglones_Ajustes (Documento,cod_art,renglon,cod_tip,tipo,cod_alm,can_art1,cos_ult1,")
         loConsulta.AppendLine("								mon_net,notas,can_uni,cod_uni,can_uni2,cod_uni2,can_art2)")
         loConsulta.AppendLine("	VALUES(@lcContadorObtenido,@lcArticulo,@lnRenglon,'E02','Entrada',@lcCodAlm_Tra,@lnCantidad,1,")
         loConsulta.AppendLine("			@lnCantidad, @lcNom_Art,1,@lcUnidad,1,@lcUnidad,@lnCantidad)")
         loConsulta.AppendLine("")
+        'ACTUALIZAR EXISTENCIAS EN TABLAS articulos Y renglones_almacenes
         loConsulta.AppendLine("	UPDATE Articulos SET Exi_Act1 = Exi_Act1 + @lnCantidad WHERE Cod_Art = @lcArticulo")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	IF NOT EXISTS (SELECT 1 FROM Renglones_Almacenes WHERE Cod_Alm = @lcCodAlm_Tra AND Cod_Art = @lcArticulo)")
@@ -716,6 +736,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("	ELSE")
         loConsulta.AppendLine("	    UPDATE Renglones_Almacenes SET Exi_Act1 = Exi_Act1  + @lnCantidad WHERE Cod_ALm = @lcCodAlm_Tra AND Cod_Art = @lcArticulo")
         loConsulta.AppendLine("	")
+        'SI EL ARTÍCULO MANEJA LOTES, ACTUALIZAR  EXISTENCIAS EN TABLAS lotes Y renglones_lotes Y REGISTRAR MOVIMIENTO DEL LOTE EN TABLA operaciones_lotes
         loConsulta.AppendLine("	IF @lcLote <> ''")
         loConsulta.AppendLine("	BEGIN")
         loConsulta.AppendLine("		IF NOT EXISTS (SELECT 1 FROM Lotes WHERE Cod_Lot = @lcLote AND Cod_Art = @lcArticulo)")
@@ -734,25 +755,26 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("		VALUES (@lcCodAlm_Tra, @lcArticulo, @lcLote, @lnCantidad,@lcContadorObtenido,1,'Ajustes_Inventarios','Entrada',@lnRenglon)")
         loConsulta.AppendLine("	END")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("	UPDATE Ajustes SET Can_Art1 = (SELECT SUM(Can_Art1) FROM Renglones_Ajustes WHERE Documento = @lcContadorObtenido) WHERE Documento = @lcContadorObtenido")
-        loConsulta.AppendLine("	UPDATE Ajustes SET Mon_Net = (SELECT SUM(Mon_Net) FROM Renglones_Ajustes WHERE Documento = @lcContadorObtenido) WHERE Documento = @lcContadorObtenido")
-        loConsulta.AppendLine("")
-        loConsulta.AppendLine("	IF EXISTS(SELECT Documento FROM Ajustes WHERE Documento = @lcContadorObtenido)")
-        loConsulta.AppendLine("	BEGIN")
-        loConsulta.AppendLine("	    EXECUTE [dbo].[sp_GuardarAuditoria] ")
-        loConsulta.AppendLine("            @lcAud_Usuario, @lcAud_Tipo, @lcAud_Tabla, @lcAud_Opcion, @lcAud_Accion,")
-        loConsulta.AppendLine("            @lcAud_Documento, @lcAud_Codigo, @lcAud_Clave2, @lcAud_Clave3, @lcAud_Clave4, @lcAud_Clave5,")
-        loConsulta.AppendLine("            @lcAud_Detalle, @lcAud_Equipo, @lcAud_Sucursal, @lcAud_Objeto, @lcAud_Notas, @lcAud_Empresa")
-        loConsulta.AppendLine("	END")
-        loConsulta.AppendLine("")
         loConsulta.AppendLine("	SET @lnRenglon = @lnRenglon + 1")
         loConsulta.AppendLine("	")
+        loConsulta.AppendLine("END")
+        loConsulta.AppendLine("")
+        loConsulta.AppendLine("UPDATE Ajustes SET Can_Art1 = (SELECT SUM(Can_Art1) FROM Renglones_Ajustes WHERE Documento = @lcContadorObtenido) WHERE Documento = @lcContadorObtenido")
+        loConsulta.AppendLine("UPDATE Ajustes SET Mon_Net = (SELECT SUM(Mon_Net) FROM Renglones_Ajustes WHERE Documento = @lcContadorObtenido) WHERE Documento = @lcContadorObtenido")
+        loConsulta.AppendLine("")
+        'INSERTAR AUDITORÍA SI EXISTE EL DOCUMENTO
+        loConsulta.AppendLine("IF EXISTS(SELECT Documento FROM Ajustes WHERE Documento = @lcContadorObtenido)")
+        loConsulta.AppendLine("BEGIN")
+        loConsulta.AppendLine("    EXECUTE [dbo].[sp_GuardarAuditoria] ")
+        loConsulta.AppendLine("           @lcAud_Usuario, @lcAud_Tipo, @lcAud_Tabla, @lcAud_Opcion, @lcAud_Accion,")
+        loConsulta.AppendLine("           @lcAud_Documento, @lcAud_Codigo, @lcAud_Clave2, @lcAud_Clave3, @lcAud_Clave4, @lcAud_Clave5,")
+        loConsulta.AppendLine("           @lcAud_Detalle, @lcAud_Equipo, @lcAud_Sucursal, @lcAud_Objeto, @lcAud_Notas, @lcAud_Empresa")
         loConsulta.AppendLine("END")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("DROP TABLE #tmpConsumido")
         loConsulta.AppendLine("DROP TABLE #tmpObtenido")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("SELECT @lcMensaje AS Mensaje;")
+        loConsulta.AppendLine("SELECT @lcContadorConsumido AS Consumido, @lcContadorObtenido AS Obtenido;")
         loConsulta.AppendLine("")
 
         'Me.TxtComentario.Text = loConsulta.ToString()
@@ -768,12 +790,15 @@ Partial Class CGS_frmMaquila
 
             'lodatos.mEjecutarTransaccion(laSentencias)
             loTabla = lodatos.mObtenerTodosSinEsquema(loConsulta.ToString(), "Mensaje").Tables(0)
-            'Me.mMostrarMensajeModal("Ajustes Generados", "Se generaron los siguientes ajustes: </br> Consumos:" & loTabla.Rows(0).Item("Consumo") & " Obtenido: " & loTabla.Rows(0).Item("Trabajo"), "i", False)
+
             Me.mCargarTablaVacia()
-            Me.lblNotificacion.Text = CStr(loTabla.Rows(0).Item("Mensaje")).Trim()
+
+            Me.lblNotificacion.Text = "Se generaron los siguientes ajustes de inventario: <br/> - CONSUMO: " & CStr(loTabla.Rows(0).Item("Consumido")).Trim() & ". <br/> - OBTENIDO: " & CStr(loTabla.Rows(0).Item("Obtenido")).Trim() & "."
             Me.mMostrarMensajeModal("Ajustes Generados", "Se generaron correctamente los ajustes por consumo y material obtenido.", "i", False)
 
             Me.cmdAceptar.Enabled = False
+            Me.TxtComentCons.Enabled = False
+            Me.TxtComentObt.Enabled = False
             Me.cmdCancelar.Text = "Cerrar"
             Me.grdConsumido.mHabilitarBotonera(False)
             Me.grdObtenido.mHabilitarBotonera(False)
@@ -877,47 +902,50 @@ Partial Class CGS_frmMaquila
 
     End Sub
 
-    'Private Sub TxtBusqueda_mResultadoBusquedaValido(sender As txtNormal, lcNombreCampo As String, lnIndice As Integer) Handles TxtBusqueda.mResultadoBusquedaValido
+    Private Sub grdConsumido_mActualizarRenglones(sender As Object, e As EventArgs) Handles grdConsumido.mActualizarRenglones
+        Me.txtTotalConsumido.pbValor = Me.grdConsumido.mObtenerSumaColumna("can_art")
+    End Sub
 
-    '    Me.mCargarTabla()
-
-    'End Sub
-
-    'Private Sub grdObtenido_mFilaSeleccionada(lnFilaAnterior As Integer, lnFilaNueva As Integer) Handles grdObtenido.mFilaSeleccionada
-
-    'End Sub
-
-    'Private Sub grdConsumido_mFilaSeleccionada(lnFilaAnterior As Integer, lnFilaNueva As Integer) Handles grdConsumido.mFilaSeleccionada
-
-    '    Dim lcArticulo As String = Me.grdConsumido.poValorDatos(Me.grdConsumido.pnIndiceFilaSeleccionada, "cod_art")
-
-    '    Me.TxtComentario.Text = lcArticulo
-
-    '    'Me.grdConsumido.p
-    '    If lcArticulo.Trim() = "" Then
-    '        Me.mMostrarMensajeModal("Datos no válidos", "Debe primero indicar el artículo", "e", True)
-    '    Else
-    '        Me.grdConsumido.mDesregistrarBusquedaAsistida("cod_lot")
-
-    '        Me.grdConsumido.mRegistrarBusquedaAsistida("cod_lot", _
-    '                                           "renglones_lotes", _
-    '                                            "cod_alm,cod_art,cod_lot", _
-    '                                            "cod_lot,exi_act1", _
-    '                                            ".,Lote,Disponible", _
-    '                                            "cod_lot,exi_act1", _
-    '                                            "", "cod_art = " & goServicios.mObtenerCampoFormatoSQL(lcArticulo) & " AND cod_alm = " & goServicios.mObtenerCampoFormatoSQL(Me.pcAlmacen) & " AND exi_act1 > 0", False)
-
-    '        Me.grdConsumido.pcUrlFormularioBusqueda = "../../Framework/Formularios/frmFormularioBusqueda.aspx"
-    '    End If
-
-    'End Sub
-
-
+    Private Sub grdObtenido_mActualizarRenglones(sender As Object, e As EventArgs) Handles grdObtenido.mActualizarRenglones
+        Me.txtTotalObtenido.pbValor = Me.grdObtenido.mObtenerSumaColumna("can_art")
+    End Sub
 
 #End Region
 
 #Region " Servicios Web "
+    ''' <summary>
+    ''' Valida un código de artículo.
+    ''' </summary>
+    ''' <param name="lcArticulo"></param>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    <Web.Services.WebMethod(True)> _
+    Public Shared Function mValidarArticulo(lcArticulo As String) As Generic.Dictionary(Of String, Object)
+        Dim loRespuesta As New Generic.Dictionary(Of String, Object)
 
+        Dim lcConsulta As String = "SELECT Cod_Art from Articulos WHERE status = 'A' AND Cod_Art = " & _
+            goServicios.mObtenerCampoFormatoSQL(lcArticulo)
+
+        Try
+
+            Dim loDatos As DataTable
+            loDatos = (New goDatos()).mObtenerTodosSinEsquema(lcConsulta, "Articulos").Tables(0)
+
+            If (loDatos.Rows.Count > 0) Then
+
+                loRespuesta.Add("llEsValido", True)
+                Return loRespuesta
+
+            End If
+
+        Catch ex As Exception
+
+        End Try
+
+        loRespuesta.Add("llEsValido", False)
+
+        Return loRespuesta
+    End Function
 #End Region
 
 End Class
@@ -926,4 +954,4 @@ End Class
 '-------------------------------------------------------------------------------------------'
 ' KDE: 14/11/17: Codigo Inicial.								                            '
 '-------------------------------------------------------------------------------------------'
-' 
+' KDE: 26/01/17: Manejo de artículos con y sin lote. Validaciones varias.
