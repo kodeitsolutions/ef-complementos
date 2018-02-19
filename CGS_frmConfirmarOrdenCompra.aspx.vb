@@ -444,6 +444,7 @@ Partial Class CGS_frmConfirmarOrdenCompra
         loConsulta.AppendLine("SELECT Ordenes_Compras.Status,")
         loConsulta.AppendLine("       Ordenes_Compras.Cod_Pro,")
         loConsulta.AppendLine("       Ordenes_Compras.Comentario,")
+        loConsulta.AppendLine("       Ordenes_Compras.Prioridad,")
         loConsulta.AppendLine("       Proveedores.Nom_Pro,")
         loConsulta.AppendLine("       Ordenes_Compras.logico1 AS mgentili,")
         loConsulta.AppendLine("       Ordenes_Compras.logico2 AS ssimanca,")
@@ -462,6 +463,10 @@ Partial Class CGS_frmConfirmarOrdenCompra
             Me.cmdAceptar.Enabled = False
             Me.cmdCancelar.Text = "Cerrar"
             Return
+        ElseIf CStr(loTabla.Rows(0).Item("Prioridad")).Trim() = "PDC" Then
+            Me.mMostrarMensajeModal("Advertencia", "El Documento es de material de producción y no puede ser confirmado.", "a")
+            Me.cmdAceptar.Enabled = False
+            Me.cmdCancelar.Text = "Cerrar"
         ElseIf (CBool(loTabla.Rows(0).Item("mgentili")) = True And lcUsuario = "mgentili") Then
             Me.mMostrarMensajeModal("Advertencia", "El Documento ya fue confirmado por usted.", "a")
             Me.cmdAceptar.Enabled = False
