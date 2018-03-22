@@ -66,7 +66,7 @@
                             <vis1Controles:lblNormal runat="server" ID="lblComentCons" Text="Comentario Consumo:" CssClass="Etiqueta"></vis1Controles:lblNormal>
                         </td>
                         <td>
-                            <vis1Controles:txtNormal runat="server" ID="TxtComentCons" CssClass="CajasTexto" Width="300" Enabled="True"></vis1Controles:txtNormal>
+                            <vis1Controles:txtNormal runat="server" ID="TxtComentCons" CssClass="CajasTexto" Width="500" Enabled="True"></vis1Controles:txtNormal>
                         </td>
                     </tr>        
                     <br /><br />
@@ -113,7 +113,7 @@
                     <tr>
                         <td style="vertical-align:top;"><vis1Controles:lblNormal runat="server" ID="lblComentComentObt" Text="Comentario Obtenido:" CssClass="Etiqueta"></vis1Controles:lblNormal></td>
                         <td>
-                            <vis1Controles:txtNormal runat="server" ID="TxtComentObt" CssClass="CajasTexto" Width="300" Enabled="True"></vis1Controles:txtNormal>
+                            <vis1Controles:txtNormal runat="server" ID="TxtComentObt" CssClass="CajasTexto" Width="500" Enabled="True"></vis1Controles:txtNormal>
                         </td>
                     </tr> 
                     <br /><br />       
@@ -297,7 +297,7 @@
                 });
             });
             //Tamaño inicial de la ventana
-            window.resizeTo(650, 720);
+            window.resizeTo(800, 720);
         </script>
 
     </form>

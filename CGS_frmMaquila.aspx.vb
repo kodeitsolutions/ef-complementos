@@ -40,18 +40,26 @@ Partial Class CGS_frmMaquila
         Me.grdConsumido.mRegistrarColumna("cod_art", "Artículo", "", True, True, "String", False, 100)
         Me.grdConsumido.mRegistrarColumna("cod_lot", "Lote", "", True, True, "String", False, 100)
         Me.grdConsumido.mRegistrarColumna("can_art", "Cantidad", 0D, True, True, "Decimal", False, 100)
+        Me.grdConsumido.mRegistrarColumna("can_pza", "Piezas", 0D, True, True, "Decimal", False, 100)
+        Me.grdConsumido.mRegistrarColumna("prc_des", "Porcentaje de Desperdicio", 0D, True, True, "Decimal", False, 100)
 
         Me.grdConsumido.mLimitarCampoTexto("cod_art", True, 50)
         Me.grdConsumido.mLimitarCampoTexto("cod_lot", True, 50)
         Me.grdConsumido.pnDecimalesColumna("can_art") = Me.pnDecimalesParaCantidad
+        Me.grdConsumido.pnDecimalesColumna("can_pza") = Me.pnDecimalesParaCantidad
+        Me.grdConsumido.pnDecimalesColumna("prc_des") = Me.pnDecimalesParaCantidad
 
         Me.grdObtenido.mRegistrarColumna("cod_art", "Artículo", "", True, True, "String", False, 100)
         Me.grdObtenido.mRegistrarColumna("cod_lot", "Lote", "", True, True, "String", False, 100)
         Me.grdObtenido.mRegistrarColumna("can_art", "Cantidad", 0D, True, True, "Decimal", False, 100)
+        Me.grdObtenido.mRegistrarColumna("can_pza", "Piezas", 0D, True, True, "Decimal", False, 100)
+        Me.grdObtenido.mRegistrarColumna("prc_des", "Porcentaje de Desperdicio", 0D, True, True, "Decimal", False, 100)
 
         Me.grdObtenido.mLimitarCampoTexto("cod_art", True, 50)
         Me.grdObtenido.mLimitarCampoTexto("cod_lot", True, 50)
         Me.grdObtenido.pnDecimalesColumna("can_art") = Me.pnDecimalesParaCantidad
+        Me.grdObtenido.pnDecimalesColumna("can_pza") = Me.pnDecimalesParaCantidad
+        Me.grdObtenido.pnDecimalesColumna("prc_des") = Me.pnDecimalesParaCantidad
 
 
         'BÚSQUEDA DE ARTÍCULOS EN LOS RENGLONES DE LAS TABLAS
@@ -151,6 +159,8 @@ Partial Class CGS_frmMaquila
         loTablaConsumido.Columns.Add(New DataColumn("cod_art", GetType(String)))
         loTablaConsumido.Columns.Add(New DataColumn("cod_lot", GetType(String)))
         loTablaConsumido.Columns.Add(New DataColumn("can_art", GetType(Decimal)))
+        loTablaConsumido.Columns.Add(New DataColumn("can_pza", GetType(Decimal)))
+        loTablaConsumido.Columns.Add(New DataColumn("prc_des", GetType(Decimal)))
 
         Dim loTablaObtenido As New DataTable("Obtenido")
 
@@ -158,6 +168,8 @@ Partial Class CGS_frmMaquila
         loTablaObtenido.Columns.Add(New DataColumn("cod_art", GetType(String)))
         loTablaObtenido.Columns.Add(New DataColumn("cod_lot", GetType(String)))
         loTablaObtenido.Columns.Add(New DataColumn("can_art", GetType(Decimal)))
+        loTablaObtenido.Columns.Add(New DataColumn("can_pza", GetType(Decimal)))
+        loTablaObtenido.Columns.Add(New DataColumn("prc_des", GetType(Decimal)))
 
         For i As Integer = 1 To 1
             Dim loRenglonConsumido As DataRow = loTablaConsumido.NewRow()
@@ -167,11 +179,15 @@ Partial Class CGS_frmMaquila
             loRenglonConsumido("cod_art") = ""
             loRenglonConsumido("cod_lot") = ""
             loRenglonConsumido("can_art") = 0D
+            loRenglonConsumido("can_pza") = 0D
+            loRenglonConsumido("prc_des") = 0D
 
             loRenglonObtenido("Renglon") = i
             loRenglonObtenido("cod_art") = ""
             loRenglonObtenido("cod_lot") = ""
             loRenglonObtenido("can_art") = 0D
+            loRenglonObtenido("can_pza") = 0D
+            loRenglonObtenido("prc_des") = 0D
 
             loTablaConsumido.Rows.Add(loRenglonConsumido)
             loTablaObtenido.Rows.Add(loRenglonObtenido)
@@ -547,6 +563,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("DECLARE @RC INT")
         loConsulta.AppendLine("DECLARE @lcContadorConsumido VARCHAR(10)")
         loConsulta.AppendLine("DECLARE @lcContadorObtenido VARCHAR(10)")
+        loConsulta.AppendLine("DECLARE @lcContadorMediciones VARCHAR(10)")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("DECLARE @lcUsuario AS CHAR(10) = " & goServicios.mObtenerCampoFormatoSQL(goUsuario.pcCodigo))
         loConsulta.AppendLine("DECLARE @lcEmpresa AS CHAR(10) = " & goServicios.mObtenerCampoFormatoSQL(goEmpresa.pcCodigo))
@@ -558,7 +575,10 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("CREATE TABLE #tmpConsumido (Renglon	INT,")
         loConsulta.AppendLine("						       Cod_Art	CHAR(8),")
         loConsulta.AppendLine("							   Lote		CHAR(30),")
-        loConsulta.AppendLine("						       Cantidad	DECIMAL(28," & Me.pnDecimalesParaCantidad & "))")
+        loConsulta.AppendLine("						       Cantidad	DECIMAL(28," & Me.pnDecimalesParaCantidad & "),")
+        loConsulta.AppendLine("							   Piezas DECIMAL(28," & Me.pnDecimalesParaCantidad & "),")
+        loConsulta.AppendLine("							   Porc_Desperdicio DECIMAL(28," & Me.pnDecimalesParaCantidad & ")")
+        loConsulta.AppendLine(")")
         loConsulta.AppendLine("")
 
         For Each loRenglon As DataRow In loConsumido.Rows 'CONSUMIDO
@@ -573,6 +593,10 @@ Partial Class CGS_frmMaquila
             loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("cod_lot")))) 'LOTE
             loConsulta.Append(",")
             loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_art")))) 'CANTIDAD LOTE
+            loConsulta.Append(",")
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_pza")))) 'PIEZAS
+            loConsulta.Append(",")
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("prc_des")))) 'PORCENTAJE DE DESPERDICIO
             loConsulta.AppendLine(")")
 
         Next loRenglon
@@ -581,7 +605,10 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("CREATE TABLE #tmpObtenido (Renglon	INT,")
         loConsulta.AppendLine("							  Cod_Art	CHAR(8),")
         loConsulta.AppendLine("							  Lote		CHAR(30),")
-        loConsulta.AppendLine("							  Cantidad	DECIMAL(28," & Me.pnDecimalesParaCantidad & "))")
+        loConsulta.AppendLine("							  Cantidad	DECIMAL(28," & Me.pnDecimalesParaCantidad & "),")
+        loConsulta.AppendLine("							  Piezas DECIMAL(28," & Me.pnDecimalesParaCantidad & "),")
+        loConsulta.AppendLine("							  Porc_Desperdicio DECIMAL(28," & Me.pnDecimalesParaCantidad & ")")
+        loConsulta.AppendLine(")")
         loConsulta.AppendLine("")
 
         For Each loRenglon As DataRow In loObtenido.Rows 'OBTENIDO
@@ -596,6 +623,10 @@ Partial Class CGS_frmMaquila
             loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("cod_lot")))) 'LOTE
             loConsulta.Append(",")
             loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_art")))) 'CANTIDAD
+            loConsulta.Append(",")
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("can_pza")))) 'PIEZAS
+            loConsulta.Append(",")
+            loConsulta.Append(goServicios.mObtenerCampoFormatoSQL(CStr(loRenglon("prc_des")))) 'PORCENTAJE DE DESPERDICIO
             loConsulta.AppendLine(")")
 
         Next loRenglon
@@ -604,6 +635,8 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("DECLARE @lcArticulo AS VARCHAR(8) = ''")
         loConsulta.AppendLine("DECLARE @lcLote AS VARCHAR(30) = ''")
         loConsulta.AppendLine("DECLARE @lnCantidad AS DECIMAL(28," & Me.pnDecimalesParaCantidad & ") = 0")
+        loConsulta.AppendLine("DECLARE @lnCan_Piezas AS DECIMAL(28," & Me.pnDecimalesParaCantidad & ") = 0")
+        loConsulta.AppendLine("DECLARE @lnPorc_Desp AS DECIMAL(28," & Me.pnDecimalesParaCantidad & ") = 0")
         loConsulta.AppendLine("DECLARE @lcUnidad AS VARCHAR(5) = ''")
         loConsulta.AppendLine("DECLARE @lcNom_Art AS VARCHAR(MAX) = ''")
         loConsulta.AppendLine("DECLARE @lnCos_Ult AS DECIMAL(28," & Me.pnDecimalesParaCantidad & ") = 0")
@@ -655,7 +688,9 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	SELECT	@lcArticulo = Cod_Art,")
         loConsulta.AppendLine("			@lcLote = Lote,")
-        loConsulta.AppendLine("			@lnCantidad = Cantidad")
+        loConsulta.AppendLine("			@lnCantidad = Cantidad,")
+        loConsulta.AppendLine("			@lnCan_Piezas = Piezas,")
+        loConsulta.AppendLine("			@lnPorc_Desp = Porc_Desperdicio")
         loConsulta.AppendLine("	FROM #tmpConsumido")
         loConsulta.AppendLine("	WHERE Renglon = @lnRenglon")
         loConsulta.AppendLine("")
@@ -685,6 +720,32 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("		VALUES (@lcCodAlm_Pro, @lcArticulo, @lcLote, ABS(@lnCantidad), @lcContadorConsumido, 1, 'Ajustes_Inventarios',")
         loConsulta.AppendLine("			'Salida',@lnRenglon)")
         loConsulta.AppendLine("	END")
+        loConsulta.AppendLine("")
+        loConsulta.AppendLine("	IF @lnCan_Piezas <> 0 OR @lnPorc_Desp <> 0")
+        loConsulta.AppendLine("	BEGIN")
+        loConsulta.AppendLine("		EXECUTE @RC = [dbo].[mObtenerProximoContador] ")
+        loConsulta.AppendLine("		'Mediciones'")
+        loConsulta.AppendLine("		,@lcSucursal")
+        loConsulta.AppendLine("		,'Normal'")
+        loConsulta.AppendLine("		,@lcContadorMediciones OUTPUT")
+        loConsulta.AppendLine("")
+        'AGREGAR MEDICIONES DE MATERIAL CONSUMIDO
+        loConsulta.AppendLine("		INSERT INTO Mediciones (Documento, Adicional, Status, Posicion, ")
+        loConsulta.AppendLine("        						Cod_Art, Cod_Alm, Cod_Reg, Tip_Med, Num_Lot, Origen, Cod_Suc, Ren_Ori,")
+        loConsulta.AppendLine("        						Prioridad, Usu_Cre, Usu_Mod, Equ_Cre, Equ_Mod)")
+        loConsulta.AppendLine("		VALUES(@lcContadorMediciones, 'LOTE|'+@lcArticulo+'|'+@lcCodAlm_Pro+'|'+RTRIM(@lcLote)+'|Salida|'+ CAST(@lnRenglon AS CHAR),")
+        loConsulta.AppendLine("			'Pendiente', 'Por Iniciar Medicion', @lcArticulo, @lcCodAlm_Pro,@lcContadorConsumido, 'Prueba',@lcLote, 'Ajustes_Inventarios', @lcSucursal,")
+        loConsulta.AppendLine("			@lnRenglon,'Media', @lcUsuario, @lcUsuario, @lcEquipo, @lcEquipo)")
+        loConsulta.AppendLine("")
+        loConsulta.AppendLine("        	INSERT INTO Renglones_Mediciones (Documento, Renglon, Cod_Var, Nom_Var, Cod_Uni, Val_Min_Esp, Val_Max_Esp, Res_Num, Evaluacion)")
+        loConsulta.AppendLine("        	VALUES (@lcContadorMediciones, 1, 'AINV-NPIEZ', 'NÚMERO DE PIEZAS AJUSTES DE INVENTARIO','UND', 1, 99999, @lnCan_Piezas, ")
+        loConsulta.AppendLine("        			CASE WHEN @lnCan_Piezas = 0 THEN 'Pendiente' ELSE 'Aprobado' END)")
+        loConsulta.AppendLine("        	INSERT INTO Renglones_Mediciones (Documento, Renglon, Cod_Var, Nom_Var, Cod_Uni, Val_Min_Esp, Val_Max_Esp, Res_Num, Evaluacion)")
+        loConsulta.AppendLine("        	VALUES (@lcContadorMediciones, 2, 'AINV-PDESP', 'PORCENTAJE DE DESPERDICIO AJUSTES DE INVENTARIO','NA', 0, 99, @lnPorc_Desp, ")
+        loConsulta.AppendLine("        			CASE WHEN @lnPorc_Desp = 0 THEN 'Pendiente' ELSE 'Aprobado' END)")
+        loConsulta.AppendLine("        	INSERT INTO Renglones_Mediciones (Documento, Renglon, Cod_Var, Nom_Var, Cod_Uni, Val_Min_Esp, Val_Max_Esp, Res_Num, Evaluacion)")
+        loConsulta.AppendLine("        	VALUES (@lcContadorMediciones, 3, 'AINV-LARG', 'LARGO REAL / AJUSTES DE INVENTARIO','MTR', 1, 99, 0,'Pendiente')")
+        loConsulta.AppendLine("END")
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	SET @lnRenglon = @lnRenglon + 1")
         loConsulta.AppendLine("END ")
@@ -716,7 +777,9 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("")
         loConsulta.AppendLine("	SELECT	@lcArticulo = Cod_Art,")
         loConsulta.AppendLine("			@lcLote = Lote,")
-        loConsulta.AppendLine("			@lnCantidad = Cantidad")
+        loConsulta.AppendLine("			@lnCantidad = Cantidad,")
+        loConsulta.AppendLine("			@lnCan_Piezas = Piezas,")
+        loConsulta.AppendLine("			@lnPorc_Desp = Porc_Desperdicio")
         loConsulta.AppendLine("	FROM #tmpObtenido")
         loConsulta.AppendLine("	WHERE Renglon = @lnRenglon")
         loConsulta.AppendLine("")
@@ -755,6 +818,32 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("		VALUES (@lcCodAlm_Tra, @lcArticulo, @lcLote, @lnCantidad,@lcContadorObtenido,1,'Ajustes_Inventarios','Entrada',@lnRenglon)")
         loConsulta.AppendLine("	END")
         loConsulta.AppendLine("")
+        'AGREGAR MEDICIONES DE MATERIAL OBTENIDO
+        loConsulta.AppendLine("	IF @lnCan_Piezas <> 0 OR @lnPorc_Desp <> 0")
+        loConsulta.AppendLine("	BEGIN")
+        loConsulta.AppendLine("		EXECUTE @RC = [dbo].[mObtenerProximoContador] ")
+        loConsulta.AppendLine("		'Mediciones'")
+        loConsulta.AppendLine("		,@lcSucursal")
+        loConsulta.AppendLine("		,'Normal'")
+        loConsulta.AppendLine("		,@lcContadorMediciones OUTPUT")
+        loConsulta.AppendLine("")
+        loConsulta.AppendLine("		INSERT INTO Mediciones (Documento, Adicional, Status, Posicion, ")
+        loConsulta.AppendLine("        						Cod_Art, Cod_Alm, Cod_Reg, Tip_Med, Num_Lot, Origen, Cod_Suc, Ren_Ori,")
+        loConsulta.AppendLine("        						Prioridad, Usu_Cre, Usu_Mod, Equ_Cre, Equ_Mod)")
+        loConsulta.AppendLine("		VALUES(@lcContadorMediciones, 'LOTE|'+@lcArticulo+'|'+@lcCodAlm_Tra+'|'+RTRIM(@lcLote)+'|Entrada|'+CAST(@lnRenglon AS CHAR),")
+        loConsulta.AppendLine("			'Pendiente', 'Por Iniciar Medicion', @lcArticulo, @lcCodAlm_Tra,@lcContadorObtenido, 'Prueba',@lcLote, 'Ajustes_Inventarios', @lcSucursal,")
+        loConsulta.AppendLine("			@lnRenglon,'Media', @lcUsuario, @lcUsuario, @lcEquipo, @lcEquipo)")
+        loConsulta.AppendLine("")
+        loConsulta.AppendLine("        	INSERT INTO Renglones_Mediciones (Documento, Renglon, Cod_Var, Nom_Var, Cod_Uni, Val_Min_Esp, Val_Max_Esp, Res_Num, Evaluacion)")
+        loConsulta.AppendLine("        	VALUES (@lcContadorMediciones, 1, 'AINV-NPIEZ', 'NÚMERO DE PIEZAS AJUSTES DE INVENTARIO','UND', 1, 99999, @lnCan_Piezas, ")
+        loConsulta.AppendLine("        			CASE WHEN @lnCan_Piezas = 0 THEN 'Pendiente' ELSE 'Aprobado' END)")
+        loConsulta.AppendLine("        	INSERT INTO Renglones_Mediciones (Documento, Renglon, Cod_Var, Nom_Var, Cod_Uni, Val_Min_Esp, Val_Max_Esp, Res_Num, Evaluacion)")
+        loConsulta.AppendLine("        	VALUES (@lcContadorMediciones, 2, 'AINV-PDESP', 'PORCENTAJE DE DESPERDICIO AJUSTES DE INVENTARIO','NA', 0, 99, @lnPorc_Desp, ")
+        loConsulta.AppendLine("        			CASE WHEN @lnPorc_Desp = 0 THEN 'Pendiente' ELSE 'Aprobado' END)")
+        loConsulta.AppendLine("        	INSERT INTO Renglones_Mediciones (Documento, Renglon, Cod_Var, Nom_Var, Cod_Uni, Val_Min_Esp, Val_Max_Esp, Res_Num, Evaluacion)")
+        loConsulta.AppendLine("        	VALUES (@lcContadorMediciones, 3, 'AINV-LARG', 'LARGO REAL / AJUSTES DE INVENTARIO','MTR', 1, 99, 0,'Pendiente')")
+        loConsulta.AppendLine("END")
+        loConsulta.AppendLine("")
         loConsulta.AppendLine("	SET @lnRenglon = @lnRenglon + 1")
         loConsulta.AppendLine("	")
         loConsulta.AppendLine("END")
@@ -777,7 +866,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("SELECT @lcContadorConsumido AS Consumido, @lcContadorObtenido AS Obtenido;")
         loConsulta.AppendLine("")
 
-        'Me.TxtComentario.Text = loConsulta.ToString()
+        'Me.TxtComentCons.Text = loConsulta.ToString()
         'Return
 
         Dim lodatos As New goDatos()
