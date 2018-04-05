@@ -97,6 +97,7 @@ Partial Class CGS_frmMaquila
         Me.txtTotalConsumido.pnNumeroDecimales = Me.pnDecimalesParaCantidad
         Me.txtTotalObtenido.pnNumeroDecimales = Me.pnDecimalesParaCantidad
 
+
         'CARGAR COMBOBOXES DE ALMACENES
         If Not Me.IsPostBack() Then
 
@@ -152,6 +153,7 @@ Partial Class CGS_frmMaquila
     ''' </summary>
     ''' <remarks></remarks>
     Private Sub mCargarTablaVacia()
+        Me.txtFecha.pdValor = Date.Now()
 
         Dim loTablaConsumido As New DataTable("Consumido")
 
@@ -229,6 +231,8 @@ Partial Class CGS_frmMaquila
             Dim lcArticulo As String = CStr(loRenglon("cod_art"))
             Dim lcLote As String = CStr(loRenglon("cod_lot")).Trim()
             Dim lnCantidad As Decimal = CDec(loRenglon("can_art"))
+            Dim lnPiezas As Decimal = CDec(loRenglon("can_pza"))
+            Dim lnPorcDesp As Decimal = CDec(loRenglon("prc_des"))
 
             If (lcArticulo = "") Then
                 laConsumidoVacios.Add(lnRenglon)
@@ -236,7 +240,7 @@ Partial Class CGS_frmMaquila
             End If
 
             If Not laArtLotes.ContainsKey(lcArticulo.ToUpper() & "|" & lcLote.ToUpper()) Then
-                laArtLotes.Add(lcArticulo.ToUpper() & "|" & lcLote.ToUpper(), New Object() {lnRenglon, lcArticulo, lcLote, lnCantidad})
+                laArtLotes.Add(lcArticulo.ToUpper() & "|" & lcLote.ToUpper(), New Object() {lnRenglon, lcArticulo, lcLote, lnCantidad, lnPiezas, lnPorcDesp})
             Else
                 Me.mMostrarMensajeModal("Datos no válidos", "Consumo: Los siguientes datos no son válidos: <br/> Renglón " & lnRenglon & ": " & lcArticulo & "/" & lcLote & " artículo y/o lote repetidos.", "a", False)
             End If
@@ -249,30 +253,55 @@ Partial Class CGS_frmMaquila
         loConsultaConsumido.AppendLine("")
         loConsultaConsumido.AppendLine("CREATE TABLE #tmpValidar(   Cod_Art CHAR(8) COLLATE DATABASE_DEFAULT,")
         loConsultaConsumido.AppendLine("                            Usa_Lot	BIT DEFAULT(0),")
+        loConsultaConsumido.AppendLine("                            Disponible DECIMAL(28," & Me.pnDecimalesParaCantidad & ") DEFAULT(CAST(0 AS DECIMAL(28," & Me.pnDecimalesParaCantidad & "))), ")
         loConsultaConsumido.AppendLine("							Lote	CHAR(30) COLLATE DATABASE_DEFAULT, ")
         loConsultaConsumido.AppendLine("                            Can_Art DECIMAL(28," & Me.pnDecimalesParaCantidad & "), ")
+        loConsultaConsumido.AppendLine("                            Piezas DECIMAL(28," & Me.pnDecimalesParaCantidad & "), ")
+        loConsultaConsumido.AppendLine("                            Porc_Desperdicio DECIMAL(28," & Me.pnDecimalesParaCantidad & "), ")
         loConsultaConsumido.AppendLine("                            Valido  BIT DEFAULT (0),")
         loConsultaConsumido.AppendLine("                            Renglon INT);")
         loConsultaConsumido.AppendLine("")
 
         For Each lcItem As String In laArtLotes.Keys
-            loConsultaConsumido.AppendLine("INSERT INTO #tmpValidar(Cod_Art, Lote, Can_Art, Renglon)")
+            loConsultaConsumido.AppendLine("INSERT INTO #tmpValidar(Cod_Art, Lote, Can_Art, Renglon, Piezas, Porc_Desperdicio)")
             loConsultaConsumido.Append("VALUES (" & goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(1)))
             loConsultaConsumido.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(2)))
             loConsultaConsumido.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(3)))
             loConsultaConsumido.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(0)))
+            loConsultaConsumido.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(4)))
+            loConsultaConsumido.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(5)))
             loConsultaConsumido.AppendLine(")")
         Next
 
         loConsultaConsumido.AppendLine("")
         loConsultaConsumido.AppendLine("DECLARE @lnFilas AS INT = (SELECT MAX(Renglon) FROM #tmpValidar)")
         loConsultaConsumido.AppendLine("DECLARE @lnRenglon AS INT = 1")
+        loConsultaConsumido.AppendLine("DECLARE @lcArticulo AS VARCHAR(8) = ''")
+        loConsultaConsumido.AppendLine("DECLARE @lcLote AS VARCHAR(30) = ''")
+        loConsultaConsumido.AppendLine("DECLARE @lcAlmacen AS VARCHAR(15) = " & goServicios.mObtenerCampoFormatoSQL(lcAlmConsumo))
         loConsultaConsumido.AppendLine("")
         loConsultaConsumido.AppendLine("WHILE @lnRenglon <= @lnFilas")
         loConsultaConsumido.AppendLine("BEGIN")
+        loConsultaConsumido.AppendLine("")
+        loConsultaConsumido.AppendLine("	SELECT @lcArticulo = Cod_Art,")
+        loConsultaConsumido.AppendLine("			@lcLote = Lote")
+        loConsultaConsumido.AppendLine("	FROM #tmpValidar")
+        loConsultaConsumido.AppendLine("	WHERE Renglon = @lnRenglon")
+        loConsultaConsumido.AppendLine("")
         loConsultaConsumido.AppendLine("	UPDATE #tmpValidar ")
         loConsultaConsumido.AppendLine("	SET Usa_Lot = COALESCE((SELECT Usa_Lot FROM Articulos WHERE Cod_Art = (SELECT Cod_Art FROM #tmpValidar WHERE Renglon = @lnRenglon)),0)")
         loConsultaConsumido.AppendLine("	WHERE Renglon = @lnRenglon")
+        loConsultaConsumido.AppendLine("")
+        loConsultaConsumido.AppendLine("	UPDATE #tmpValidar ")
+        loConsultaConsumido.AppendLine("	SET  Disponible = CASE WHEN (SELECT Usa_Lot FROM #tmpValidar WHERE Renglon = @lnRenglon) = 1 ")
+        loConsultaConsumido.AppendLine("						   THEN COALESCE((SELECT Exi_Act1 FROM Renglones_Lotes ")
+        loConsultaConsumido.AppendLine("										  WHERE Cod_Art = @lcArticulo AND Cod_Lot = @lcLote AND Cod_Alm = @lcAlmacen ),0)")
+        loConsultaConsumido.AppendLine("						   ELSE COALESCE((SELECT Exi_Act1 FROM Renglones_Almacenes ")
+        loConsultaConsumido.AppendLine("										   WHERE Cod_Art = @lcArticulo AND Cod_Alm = @lcAlmacen ),0) ")
+        loConsultaConsumido.AppendLine("					  END")
+        loConsultaConsumido.AppendLine("	WHERE Renglon = @lnRenglon")
+        loConsultaConsumido.AppendLine("")
+        loConsultaConsumido.AppendLine("")
         loConsultaConsumido.AppendLine("")
         loConsultaConsumido.AppendLine("	SET @lnRenglon = @lnRenglon + 1")
         loConsultaConsumido.AppendLine("END")
@@ -280,34 +309,38 @@ Partial Class CGS_frmMaquila
         'SI EL ARTÍCULO USA LOTE, SE VERIFICA QUE EL LOTE EXISTA Y TENGA DISPONIBLE LA CANTIDAD ESPECIFICADA EN EL ALMACÉN INDICADO
         'TAMBIÉN SE VERIFICA QUE LA CANTIDAD SEA MAYOR A CERO(0)
         loConsultaConsumido.AppendLine("UPDATE #tmpValidar")
-        loConsultaConsumido.AppendLine("SET Valido = 1")
+        loConsultaConsumido.AppendLine("SET Valido = 1,")
+        loConsultaConsumido.AppendLine("    Disponible = Renglones_Lotes.Exi_Act1")
         loConsultaConsumido.AppendLine("FROM Renglones_Lotes  ")
         loConsultaConsumido.AppendLine("WHERE Renglones_Lotes.Cod_Lot = #tmpValidar.Lote ")
         loConsultaConsumido.AppendLine("    AND (Renglones_Lotes.Exi_Act1 > 0 AND #tmpValidar.Can_Art <= Renglones_Lotes.Exi_Act1)")
         loConsultaConsumido.AppendLine("    AND  Renglones_Lotes.Cod_Art = #tmpValidar.Cod_Art")
-        loConsultaConsumido.AppendLine("	AND  Renglones_Lotes.Cod_Alm = " & goServicios.mObtenerCampoFormatoSQL(lcAlmConsumo))
+        loConsultaConsumido.AppendLine("	AND  Renglones_Lotes.Cod_Alm = @lcAlmacen")
         loConsultaConsumido.AppendLine("	AND #tmpValidar.Usa_Lot = 1 ")
         loConsultaConsumido.AppendLine("    AND #tmpValidar.Can_Art > 0")
         loConsultaConsumido.AppendLine("")
         'SI EL ARTÍCULO NO USA LOTE, SE VERIFICA QUE EL ARTÍCULO EXISTA Y TENGA DISPONIBLE LA CANTIDAD ESPECIFICADA EN EL ALMACÉN INDICADO
         'TAMBIÉN SE VERIFICA QUE LA CANTIDAD SEA MAYOR A CERO(0) 
         loConsultaConsumido.AppendLine("UPDATE #tmpValidar")
-        loConsultaConsumido.AppendLine("SET Valido = 1")
+        loConsultaConsumido.AppendLine("SET Valido = 1,")
+        loConsultaConsumido.AppendLine("    Disponible = Renglones_Almacenes.Exi_Act1")
         loConsultaConsumido.AppendLine("FROM Renglones_Almacenes  ")
         loConsultaConsumido.AppendLine("WHERE (Renglones_Almacenes.Exi_Act1 > 0 AND #tmpValidar.Can_Art <= Renglones_Almacenes.Exi_Act1)")
         loConsultaConsumido.AppendLine("    AND  Renglones_Almacenes.Cod_Art = #tmpValidar.Cod_Art")
-        loConsultaConsumido.AppendLine("	AND  Renglones_Almacenes.Cod_Alm = " & goServicios.mObtenerCampoFormatoSQL(lcAlmConsumo))
+        loConsultaConsumido.AppendLine("	AND  Renglones_Almacenes.Cod_Alm = @lcAlmacen")
         loConsultaConsumido.AppendLine("	AND #tmpValidar.Usa_Lot = 0 ")
         loConsultaConsumido.AppendLine("	AND #tmpValidar.Lote = ''")
         loConsultaConsumido.AppendLine("    AND #tmpValidar.Can_Art > 0")
+        loConsultaConsumido.AppendLine("    AND #tmpValidar.Piezas = 0 ")
+        loConsultaConsumido.AppendLine("    AND #tmpValidar.Porc_Desperdicio = 0")
         loConsultaConsumido.AppendLine("")
-        loConsultaConsumido.AppendLine("SELECT Cod_Art, Usa_Lot, Lote, Can_Art, Renglon ")
+        loConsultaConsumido.AppendLine("SELECT Cod_Art, Usa_Lot, Disponible, Lote, Can_Art, Renglon, Piezas, Porc_Desperdicio ")
         loConsultaConsumido.AppendLine("FROM #tmpValidar")
         loConsultaConsumido.AppendLine("WHERE Valido = 0")
         loConsultaConsumido.AppendLine("ORDER BY Renglon")
         loConsultaConsumido.AppendLine("")
 
-        'Me.TxtComentario.Text = loConsultaConsumido.ToString()
+        'Me.TxtComentCons.Text = loConsultaConsumido.ToString()
         'Return False
 
         Dim loConsumido As DataTable
@@ -335,12 +368,14 @@ Partial Class CGS_frmMaquila
                     loMensaje.Append(CStr(loRenglon("cod_art")).Trim())
                     loMensaje.Append(", El artículo no maneja lote y se colocó un lote.")
                     loMensaje.Append("<br/>")
-                ElseIf CBool(loRenglon("usa_lot")) = False And CStr(loRenglon("lote")).Trim() = "" And CDec(loRenglon("can_art")) > 0D Then
+                ElseIf CBool(loRenglon("usa_lot")) = False And CStr(loRenglon("lote")).Trim() = "" And CDec(loRenglon("can_art")) > 0D And CDec(loRenglon("piezas")) = 0D And CDec(loRenglon("porc_desperdicio")) = 0D Then
                     loMensaje.Append("* Renglón ")
                     loMensaje.Append(CInt(loRenglon("Renglon")))
                     loMensaje.Append(": ")
                     loMensaje.Append(CStr(loRenglon("cod_art")).Trim())
                     loMensaje.Append(", El artículo no existe o no tiene disponible la cantidad especificada en el almacén de consumo.")
+                    loMensaje.Append("<br/>")
+                    loMensaje.Append("Disponible: " & CDec(loRenglon("disponible")) & ".")
                     loMensaje.Append("<br/>")
                 ElseIf CBool(loRenglon("usa_lot")) = True And CStr(loRenglon("lote")).Trim() = "" Then
                     loMensaje.Append("* Renglón ")
@@ -356,12 +391,21 @@ Partial Class CGS_frmMaquila
                     loMensaje.Append(CStr(loRenglon("cod_art")).Trim())
                     loMensaje.Append(",  El lote no existe o no tiene disponible la cantidad especificada en el almacén de consumo.")
                     loMensaje.Append("<br/>")
+                    loMensaje.Append("Disponible: " & CDec(loRenglon("disponible")) & ".")
+                    loMensaje.Append("<br/>")
                 ElseIf CDec(loRenglon("can_art")) = 0D Then
                     loMensaje.Append("* Renglón ")
                     loMensaje.Append(CInt(loRenglon("Renglon")))
                     loMensaje.Append(": ")
                     loMensaje.Append(CStr(loRenglon("cod_art")).Trim())
                     loMensaje.Append(",  La cantidad debe ser mayor a cero (0).")
+                    loMensaje.Append("<br/>")
+                ElseIf ((CStr(loRenglon("lote")).Trim() = "" And CDec(loRenglon("piezas")) <> 0D) Or (CStr(loRenglon("lote")).Trim() = "" And CDec(loRenglon("porc_desperdicio")) <> 0D)) Then
+                    loMensaje.Append("* Renglón ")
+                    loMensaje.Append(CInt(loRenglon("Renglon")))
+                    loMensaje.Append(": ")
+                    loMensaje.Append(CStr(loRenglon("cod_art")).Trim())
+                    loMensaje.Append(",  No puede asignar mediciones si el artículo no maneja lotes.")
                     loMensaje.Append("<br/>")
                 End If
             Next loRenglon
@@ -397,6 +441,8 @@ Partial Class CGS_frmMaquila
             Dim lcArticulo As String = CStr(loRenglon("cod_art")).Trim()
             Dim lcLote As String = CStr(loRenglon("cod_lot")).Trim()
             Dim lnCantidad As Decimal = CDec(loRenglon("can_art"))
+            Dim lnPiezas As Decimal = CDec(loRenglon("can_pza"))
+            Dim lnPorcDesp As Decimal = CDec(loRenglon("prc_des"))
 
             If (lcArticulo = "") Then
                 laObtenidoVacios.Add(lnRenglon)
@@ -404,7 +450,7 @@ Partial Class CGS_frmMaquila
             End If
 
             If Not laArtLotes.ContainsKey(lcArticulo.ToUpper() & "|" & lcLote.ToUpper()) Then
-                laArtLotes.Add(lcArticulo.ToUpper() & "|" & lcLote.ToUpper(), New Object() {lnRenglon, lcArticulo, lcLote, lnCantidad})
+                laArtLotes.Add(lcArticulo.ToUpper() & "|" & lcLote.ToUpper(), New Object() {lnRenglon, lcArticulo, lcLote, lnCantidad, lnPiezas, lnPorcDesp})
             Else
                 Me.mMostrarMensajeModal("Datos no válidos", "Obtenido: Los siguientes datos no son válidos: <br/> Renglón " & lnRenglon & ": " & lcArticulo & "/" & lcLote & " artículo y/o lote repetidos.", "a", False)
                 Return False
@@ -416,16 +462,20 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("                         Usa_Lot	BIT DEFAULT(0),")
         loConsulta.AppendLine("							Lote	CHAR(30) COLLATE DATABASE_DEFAULT, ")
         loConsulta.AppendLine("                         Can_Art DECIMAL(28," & Me.pnDecimalesParaCantidad & "), ")
+        loConsulta.AppendLine("                         Piezas DECIMAL(28," & Me.pnDecimalesParaCantidad & "), ")
+        loConsulta.AppendLine("                         Porc_Desperdicio DECIMAL(28," & Me.pnDecimalesParaCantidad & "), ")
         loConsulta.AppendLine("                         Valido  BIT DEFAULT (0),")
         loConsulta.AppendLine("                         Renglon INT);")
         loConsulta.AppendLine("")
 
         For Each lcItem As String In laArtLotes.Keys
-            loConsulta.AppendLine("INSERT INTO #tmpValidar(Cod_Art, Lote, Can_Art, Renglon)")
+            loConsulta.AppendLine("INSERT INTO #tmpValidar(Cod_Art, Lote, Can_Art, Renglon, Piezas, Porc_Desperdicio)")
             loConsulta.Append("VALUES (" & goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(1)))
             loConsulta.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(2)))
             loConsulta.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(3)))
             loConsulta.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(0)))
+            loConsulta.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(4)))
+            loConsulta.Append(", ").Append(goServicios.mObtenerCampoFormatoSQL(laArtLotes(lcItem)(5)))
             loConsulta.AppendLine(")")
         Next
 
@@ -449,10 +499,10 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine(" AND Articulos.Status = 'A'")
         loConsulta.AppendLine("	AND Articulos.Usa_Lot = #tmpValidar.Usa_Lot ")
         loConsulta.AppendLine("	AND ((#tmpValidar.Usa_Lot = 1  AND #tmpValidar.Lote <> '')")
-        loConsulta.AppendLine("		OR (#tmpValidar.Usa_Lot = 0 AND #tmpValidar.Lote = '')) ")
+        loConsulta.AppendLine("		OR (#tmpValidar.Usa_Lot = 0 AND #tmpValidar.Lote = '' AND #tmpValidar.Porc_Desperdicio <> 0 AND #tmpValidar.Piezas <> 0)) ")
         loConsulta.AppendLine(" AND #tmpValidar.Can_Art > 0")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("SELECT Cod_Art, Usa_Lot, Lote, Can_Art, Renglon, Valido")
+        loConsulta.AppendLine("SELECT Cod_Art, Usa_Lot, Lote, Can_Art, Renglon, Valido, Piezas, Porc_Desperdicio")
         loConsulta.AppendLine("FROM #tmpValidar")
         loConsulta.AppendLine("WHERE Valido = 0")
         loConsulta.AppendLine("ORDER BY Renglon")
@@ -512,6 +562,13 @@ Partial Class CGS_frmMaquila
                     loMensaje.Append(CStr(loRenglon("cod_art")).Trim())
                     loMensaje.Append(",  La cantidad debe ser mayor a cero (0).")
                     loMensaje.Append("<br/>")
+                ElseIf ((CStr(loRenglon("lote")).Trim() = "" And CDec(loRenglon("piezas")) <> 0D) Or (CStr(loRenglon("lote")).Trim() = "" And CDec(loRenglon("porc_desperdicio")) <> 0D)) Then
+                    loMensaje.Append("* Renglón ")
+                    loMensaje.Append(CInt(loRenglon("Renglon")))
+                    loMensaje.Append(": ")
+                    loMensaje.Append(CStr(loRenglon("cod_art")).Trim())
+                    loMensaje.Append(",  No puede asignar mediciones si el artículo no maneja lotes.")
+                    loMensaje.Append("<br/>")
                 End If
 
             Next loRenglon
@@ -570,7 +627,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("DECLARE @lcEquipo AS CHAR(30) = " & goServicios.mObtenerCampoFormatoSQL(goAuditoria.pcNombreEquipo()))
         loConsulta.AppendLine("DECLARE @lcSucursal AS CHAR(10) = " & goServicios.mObtenerCampoFormatoSQL(goSucursal.pcCodigo))
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("DECLARE @ldFecha	AS DATETIME = GETDATE()")
+        loConsulta.AppendLine("DECLARE @ldFecha	AS DATETIME = " & goServicios.mObtenerCampoFormatoSQL(CDate(Me.txtFecha.pdValor)))
         loConsulta.AppendLine("")
         loConsulta.AppendLine("CREATE TABLE #tmpConsumido (Renglon	INT,")
         loConsulta.AppendLine("						       Cod_Art	CHAR(8),")
@@ -863,7 +920,7 @@ Partial Class CGS_frmMaquila
         loConsulta.AppendLine("DROP TABLE #tmpConsumido")
         loConsulta.AppendLine("DROP TABLE #tmpObtenido")
         loConsulta.AppendLine("")
-        loConsulta.AppendLine("SELECT @lcContadorConsumido AS Consumido, @lcContadorObtenido AS Obtenido;")
+        loConsulta.AppendLine("SELECT @lcContadorConsumido AS Consumido, @lcContadorObtenido AS Obtenido")
         loConsulta.AppendLine("")
 
         'Me.TxtComentCons.Text = loConsulta.ToString()
@@ -882,15 +939,15 @@ Partial Class CGS_frmMaquila
 
             Me.mCargarTablaVacia()
 
-            Me.lblNotificacion.Text = "Se generaron los siguientes ajustes de inventario: <br/> - CONSUMO: " & CStr(loTabla.Rows(0).Item("Consumido")).Trim() & ". <br/> - OBTENIDO: " & CStr(loTabla.Rows(0).Item("Obtenido")).Trim() & "."
-            Me.mMostrarMensajeModal("Ajustes Generados", "Se generaron correctamente los ajustes por consumo y material obtenido.", "i", False)
+            Me.mMostrarMensajeModal("Ajustes Generados", "Se generaron correctamente los siguientes ajustes de inventario: <br/> - PROCESADO: " & CStr(loTabla.Rows(0).Item("Consumido")).Trim() & ". <br/> - OBTENIDO: " & CStr(loTabla.Rows(0).Item("Obtenido")).Trim() & ".", "i", False)
 
-            Me.cmdAceptar.Enabled = False
-            Me.TxtComentCons.Enabled = False
-            Me.TxtComentObt.Enabled = False
+            Me.TxtComentCons.Text = ""
+            Me.TxtComentObt.Text = ""
+
+            'Me.cmdAceptar.Enabled = False
             Me.cmdCancelar.Text = "Cerrar"
-            Me.grdConsumido.mHabilitarBotonera(False)
-            Me.grdObtenido.mHabilitarBotonera(False)
+            'Me.grdConsumido.mHabilitarBotonera(False)
+            'Me.grdObtenido.mHabilitarBotonera(False)
 
         Catch ex As Exception
 
@@ -1041,6 +1098,3 @@ End Class
 '-------------------------------------------------------------------------------------------'
 ' Fin del codigo																			'
 '-------------------------------------------------------------------------------------------'
-' KDE: 14/11/17: Codigo Inicial.								                            '
-'-------------------------------------------------------------------------------------------'
-' KDE: 26/01/17: Manejo de artículos con y sin lote. Validaciones varias.

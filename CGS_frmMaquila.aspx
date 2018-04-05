@@ -62,11 +62,23 @@
                     </table>
                     <br />
                     <tr>
+						<td>
+                            <label for="lblFecha"  class="Filtro" >Fecha: </label>
+						</td>
+						<td>
+                            <vis2Controles:txtFecha ID="txtFecha" runat="server" style="padding: 0px;margin: 0px;font-size: 13px;" CssClass="CajasTextoFecha" AutoPostBack="false" pdValor="2018-01-01">01/01/2018</vis2Controles:txtFecha>
+						</td>
+                    </tr>
+                    <br /><br />
+                    <tr>
+                        <td colspan="4" style="height: 10px;"></td>                                
+                    </tr>
+                    <tr>
                         <td style="vertical-align:top;">
                             <vis1Controles:lblNormal runat="server" ID="lblComentCons" Text="Comentario Consumo:" CssClass="Etiqueta"></vis1Controles:lblNormal>
                         </td>
                         <td>
-                            <vis1Controles:txtNormal runat="server" ID="TxtComentCons" CssClass="CajasTexto" Width="500" Enabled="True"></vis1Controles:txtNormal>
+                            <vis1Controles:txtNormal runat="server" ID="TxtComentCons" CssClass="CajasTexto" Width="500" Enabled="True" TextMode="MultiLine"></vis1Controles:txtNormal>
                         </td>
                     </tr>        
                     <br /><br />
@@ -113,7 +125,7 @@
                     <tr>
                         <td style="vertical-align:top;"><vis1Controles:lblNormal runat="server" ID="lblComentComentObt" Text="Comentario Obtenido:" CssClass="Etiqueta"></vis1Controles:lblNormal></td>
                         <td>
-                            <vis1Controles:txtNormal runat="server" ID="TxtComentObt" CssClass="CajasTexto" Width="500" Enabled="True"></vis1Controles:txtNormal>
+                            <vis1Controles:txtNormal runat="server" ID="TxtComentObt" CssClass="CajasTexto" Width="500" Enabled="True" TextMode="MultiLine"></vis1Controles:txtNormal>
                         </td>
                     </tr> 
                     <br /><br />       
@@ -146,15 +158,7 @@
                                 plLimitarValores="False" plPermitirComillas="False" plPermitirParentesisAngular="False" 
                                 plSeleccionarAlObtenerFoco="True" plUsarSeparadorMiles="True" AutoPostBack="true" Enabled="false"></vis2Controles:txtNumero> 
                         </td>
-                    </tr>
-                    <br /><br />
-                    <tr>
-                        <td colspan="2" style="height: 2px"></td>
-                    </tr>
-					<tr>
-						<td colspan="2" style="vertical-align: top; height: 100px">
-							<vis1Controles:lblNormal ID="lblNotificacion" runat="server" CssClass="Etiqueta" Font-Size="12pt" plBloqueadoParaEditar="False" plBloqueadoParaVer="False" plModoAmbiente="False" plPersonalizarHabilitado="False" plPersonalizarSeleccionado="False" plPersonalizarTitulo="True" plPersonalizarValor="False" plPersonalizarVisible="True" plSugeridoSeleccionado="False" pnTipoControl="KN_Etiqueta" pcNombreFormulario=""></vis1Controles:lblNormal></td>
-					</tr>
+                    </tr>                    
                     <tr>
                         <td colspan="6" style="height: 4px;"></td>
                     </tr>
