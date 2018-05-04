@@ -48,10 +48,8 @@
                     <table>
                         <tbody>
                             <tr>
-                                <td style="width: 75px; height: 4px;"></td>
-                                <td style="width: 251px;"></td>
-                                <td style="width: 251px;"></td>
-                                <td style="width: 188px;"></td>
+                                <td style="width: 71px; height: 4px;"></td>
+                                <td style="width: 779px;"></td>
                             </tr>
                             <tr>
                                 <td colspan="4" style="width: 100%;" class="SeparadorSeccionesFormularios">
@@ -201,7 +199,7 @@
                 } );
             } );
             //Tamaño inicial de la ventana
-            //window.resizeTo(900, 700);
+           window.resizeTo(850, 600);
         </script>
 
     </form>
