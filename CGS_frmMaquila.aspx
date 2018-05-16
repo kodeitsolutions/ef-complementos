@@ -78,7 +78,7 @@
                             <vis1Controles:lblNormal runat="server" ID="lblComentCons" Text="Comentario Consumo:" CssClass="Etiqueta"></vis1Controles:lblNormal>
                         </td>
                         <td>
-                            <vis1Controles:txtNormal runat="server" ID="TxtComentCons" CssClass="CajasTexto" Width="500" Enabled="True" TextMode="MultiLine"></vis1Controles:txtNormal>
+                            <vis1Controles:txtNormal runat="server" ID="TxtComentCons" CssClass="CajasTexto" Width="600" Enabled="True" TextMode="MultiLine"></vis1Controles:txtNormal>
                         </td>
                     </tr>        
                     <br /><br />
@@ -125,7 +125,7 @@
                     <tr>
                         <td style="vertical-align:top;"><vis1Controles:lblNormal runat="server" ID="lblComentComentObt" Text="Comentario Obtenido:" CssClass="Etiqueta"></vis1Controles:lblNormal></td>
                         <td>
-                            <vis1Controles:txtNormal runat="server" ID="TxtComentObt" CssClass="CajasTexto" Width="500" Enabled="True" TextMode="MultiLine"></vis1Controles:txtNormal>
+                            <vis1Controles:txtNormal runat="server" ID="TxtComentObt" CssClass="CajasTexto" Width="600" Enabled="True" TextMode="MultiLine"></vis1Controles:txtNormal>
                         </td>
                     </tr> 
                     <br /><br />       
@@ -196,92 +196,6 @@
         <script src="../../FrameWork/Librerias/efactory.js"></script>
         <script type="text/javascript">
 
-            //loGenerador = (function () {
-
-            //    var mValidarDepartamento = function mValidarArticulo(loArticulo) {
-
-            //        var jqFila = loArticulo.closest('table').closest('tr');
-
-            //        //var loSeccion = jqFila.find('td:nth-child(3) .CajasTexto');
-
-            //        var lcArticulo = loArticulo.val();
-            //        var lcRenglon = loArticulo.closest('table').closest('tr').find('td:nth-child(2)').text().trim();
-
-            //        if (lcArticulo.trim() === '') {
-            //            loArticulo.val('');
-            //            //loSeccion.val('');
-            //            return;
-            //        }
-
-            //        var loData = {
-            //            lcArticulo: lcArticulo
-            //        };
-
-            //        var mOk = function mOk(data, textStatus, jqXHR) {
-
-            //            if (!data.llEsValido) {
-
-            //                window.poMensajes.mMostrarMensajeNoModal("Departamento no Válido",
-            //                    'El departamento "' + lcArticulo + '" no es válido o está inactivo. Renglón N° ' + lcRenglon + '.', 'a', 150, 550, 5);
-            //                loArticulo.val('');
-            //                //loSeccion.val('');
-            //                jqFila.find('.BotonSeleccion').trigger('click');
-            //            };
-            //            //} else {
-            //            //    mValidarSeccion(loSeccion);
-            //            //};
-
-            //        };
-
-            //        jQuery.ajax('CGS_frmMaquila.aspx/mValidarArticulo?UserID=' + window.pcUserId, {
-            //            type: 'POST',
-            //            data: jQuery.toJSON(loData),
-            //            contentType: 'application/json; charset=utf-8',
-            //            dataType: 'json',
-            //            success: mOk,
-            //            error: goFactory.poAjax.mErrorAjax
-            //        });
-
-            //    }
-
-            //    var mEnlazarControles = function mEnlazarControles() {
-            //        /// <summary>Enlaza los controles del grid con las funciones de validación.</summary>
-                    
-            //        var jqFilas = jQuery('#grdConsumido_Renglones').find('tr.FilaGrid,tr.FilaAlternaGrid,tr.FilaSeleccionadaGrid');
-
-            //        //Validación de Departamentos
-            //        jqFilas.find(' td:nth-child(1) .CajasTexto').on('change', function (e) {
-
-            //            mValidarArticulo(jQuery(this));
-
-            //            return;
-            //        });                   
-                    
-            //        // Boton de selección
-            //        var jqBotones = jqFilas.find(' td:nth-child(1) .BotonSeleccion');
-            //        jqBotones.on('click', function (e) {
-            //            e.preventDefault();
-
-            //            var jqFila = jQuery('#grdConsumido_Renglones .FilaSeleccionadaGrid');
-
-            //            if (jqFila.is(':nth-child(2n+1)')) {
-            //                jqFila.addClass('FilaGrid').removeClass('FilaSeleccionadaGrid');
-            //            } else {
-            //                jqFila.addClass('FilaAlternaGrid').removeClass('FilaSeleccionadaGrid');
-            //            }
-
-            //            jQuery(this).closest('tr').addClass('FilaSeleccionadaGrid').removeClass('FilaGrid').removeClass('FilaAlternaGrid')
-            //            return false;
-
-            //        });
-
-            //    };
-
-            //    return {
-            //        mEnlazarControles: mEnlazarControles
-            //    }
-            //})();
-
             jQuery(document).ready(function () {
                 //Botón Cerrar 
                 jQuery('body').on('click', '#cmdCancelar', function (e) {
@@ -301,7 +215,7 @@
                 });
             });
             //Tamaño inicial de la ventana
-            window.resizeTo(800, 720);
+            window.resizeTo(930, 720);
         </script>
 
     </form>
