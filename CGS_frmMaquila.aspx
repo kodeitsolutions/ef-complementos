@@ -215,7 +215,7 @@
                 });
             });
             //Tamaño inicial de la ventana
-            window.resizeTo(930, 720);
+            window.resizeTo(910, 710);
         </script>
 
     </form>

@@ -38,7 +38,7 @@ Partial Class CGS_frmMaquila
 
         'CREACIÓN DE LAS TABLAS
         Me.grdConsumido.mRegistrarColumna("cod_art", "Artículo", "", True, True, "String", False, 100)
-        Me.grdConsumido.mRegistrarColumna("cod_lot", "Lote", "", True, True, "String", False, 100)
+        Me.grdConsumido.mRegistrarColumna("cod_lot", "Lote/Colada", "", True, True, "String", False, 100)
         Me.grdConsumido.mRegistrarColumna("can_art", "Cantidad", 0D, True, True, "Decimal", False, 100)
         Me.grdConsumido.mRegistrarColumna("can_pza", "Piezas", 0D, True, True, "Decimal", False, 100)
         Me.grdConsumido.mRegistrarColumna("prc_des", "Porcentaje de Desperdicio", 0D, True, True, "Decimal", False, 100)
@@ -52,7 +52,7 @@ Partial Class CGS_frmMaquila
         Me.grdConsumido.pnDecimalesColumna("med_lng") = Me.pnDecimalesParaCantidad
 
         Me.grdObtenido.mRegistrarColumna("cod_art", "Artículo", "", True, True, "String", False, 100)
-        Me.grdObtenido.mRegistrarColumna("cod_lot", "Lote", "", True, True, "String", False, 100)
+        Me.grdObtenido.mRegistrarColumna("cod_lot", "Colada", "", True, True, "String", False, 100)
         Me.grdObtenido.mRegistrarColumna("can_art", "Cantidad", 0D, True, True, "Decimal", False, 100)
         Me.grdObtenido.mRegistrarColumna("can_pza", "Piezas", 0D, True, True, "Decimal", False, 100)
         Me.grdObtenido.mRegistrarColumna("prc_des", "Porcentaje de Desperdicio", 0D, True, True, "Decimal", False, 100)
