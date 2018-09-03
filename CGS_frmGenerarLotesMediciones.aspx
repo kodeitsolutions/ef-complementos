@@ -61,10 +61,10 @@
                                 <td colspan="4" style="height: 8px;"></td>
                             </tr>
                             <tr>
-                                <!--<td>
+                                <%--<td>
                                     <vis1Controles:lblNormal runat="server" ID="lblDocumento"
                                         CssClass="Etiqueta" Text="Documento:"></vis1Controles:lblNormal>
-                                </td>-->
+                                </td>--%>
                                 <td>
                                     <vis1Controles:lblNormal runat="server" ID="lblLArticulo"
                                         CssClass="Etiqueta" Text="Artículo:"></vis1Controles:lblNormal>
